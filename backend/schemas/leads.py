@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator, HttpUrl
+from pydantic import BaseModel, HttpUrl
 from typing import Optional, List
 from datetime import datetime
 from models.lead import LeadStatus, LeadSource
@@ -32,6 +32,8 @@ class LeadAnalyzeRequest(BaseModel):
 
 
 class LeadResponse(BaseModel):
+    model_config = {"from_attributes": True}
+    
     id: int
     name: Optional[str] = None
     email: Optional[str] = None
@@ -51,9 +53,6 @@ class LeadResponse(BaseModel):
     ai_summary: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 
 class LeadListResponse(BaseModel):

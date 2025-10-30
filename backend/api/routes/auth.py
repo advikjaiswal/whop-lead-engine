@@ -51,7 +51,7 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 
@@ -78,7 +78,7 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 

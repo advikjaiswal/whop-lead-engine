@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from models.user import UserRole
 
@@ -9,7 +9,8 @@ class UserCreate(BaseModel):
     full_name: str
     whop_community_name: Optional[str] = None
     
-    @validator('password')
+    @field_validator('password')
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
@@ -22,6 +23,8 @@ class UserLogin(BaseModel):
 
 
 class UserResponse(BaseModel):
+    model_config = {"from_attributes": True}
+    
     id: int
     email: str
     full_name: str
@@ -30,9 +33,6 @@ class UserResponse(BaseModel):
     is_verified: bool
     whop_community_name: Optional[str] = None
     stripe_onboarding_complete: bool = False
-    
-    class Config:
-        from_attributes = True
 
 
 class Token(BaseModel):
@@ -53,7 +53,8 @@ class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
     
-    @validator('new_password')
+    @field_validator('new_password')
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
