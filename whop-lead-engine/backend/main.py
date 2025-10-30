@@ -18,9 +18,13 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up Whop Lead Engine...")
     
-    # Create database tables
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created successfully")
+    try:
+        # Create database tables
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        # Continue startup even if DB fails for health checks
     
     yield
     
@@ -40,7 +44,7 @@ settings = get_settings()
 # Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"] if settings.ENVIRONMENT == "development" else settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,11 +85,25 @@ async def app_exception_handler(request: Request, exc: AppException):
 # Health check
 @app.get("/health")
 async def health_check():
-    return {
+    health_data = {
         "status": "healthy",
         "timestamp": time.time(),
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "environment": settings.ENVIRONMENT
     }
+    
+    # Check database connectivity
+    try:
+        from config.database import engine
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        health_data["database"] = "connected"
+    except Exception as e:
+        logger.warning(f"Database health check failed: {e}")
+        health_data["database"] = "disconnected"
+        health_data["status"] = "degraded"
+    
+    return health_data
 
 
 # Include routers

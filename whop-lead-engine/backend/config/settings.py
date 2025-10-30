@@ -1,11 +1,12 @@
 from pydantic_settings import BaseSettings
 from typing import List, Optional
 from functools import lru_cache
+import os
 
 
 class Settings(BaseSettings):
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/whop_lead_engine"
+    # Database - Railway provides DATABASE_URL automatically
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/whop_lead_engine")
     
     # Authentication
     JWT_SECRET: str = "your-super-secret-jwt-key-here"
@@ -37,16 +38,21 @@ class Settings(BaseSettings):
     WHOP_API_URL: str = "https://api.whop.com/v1"
     
     # Application Settings
-    ENVIRONMENT: str = "development"
-    FRONTEND_URL: str = "http://localhost:3000"
-    BACKEND_URL: str = "http://localhost:8000"
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
     PLATFORM_REVENUE_SHARE: float = 0.15
     
-    # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    # CORS - Allow Railway and localhost
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000", 
+        "http://localhost:3001",
+        "https://*.railway.app",
+        "https://*.up.railway.app"
+    ]
     
-    # Redis
-    REDIS_URL: str = "redis://localhost:6379"
+    # Redis - Railway provides REDIS_URL if Redis is added
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
     
     class Config:
         env_file = ".env"
