@@ -6,6 +6,10 @@ from loguru import logger
 
 settings = get_settings()
 
+# Debug: Log the DATABASE_URL (without sensitive info)
+masked_url = settings.DATABASE_URL.replace(settings.DATABASE_URL.split('@')[0].split('//')[1], '***:***') if '@' in settings.DATABASE_URL else settings.DATABASE_URL
+logger.info(f"Using DATABASE_URL: {masked_url}")
+
 # Create database engine with error handling
 try:
     engine = create_engine(

@@ -6,7 +6,7 @@ import os
 
 class Settings(BaseSettings):
     # Database - Railway provides DATABASE_URL automatically
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/whop_lead_engine")
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/whop_lead_engine"
     
     # Authentication
     JWT_SECRET: str = "your-super-secret-jwt-key-here"
@@ -38,9 +38,9 @@ class Settings(BaseSettings):
     WHOP_API_URL: str = "https://api.whop.com/v1"
     
     # Application Settings
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
-    BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
+    ENVIRONMENT: str = "development"
+    FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_URL: str = "http://localhost:8000"
     PLATFORM_REVENUE_SHARE: float = 0.15
     
     # CORS - Allow Railway and localhost
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     ]
     
     # Redis - Railway provides REDIS_URL if Redis is added
-    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+    REDIS_URL: str = "redis://localhost:6379"
     
     class Config:
         env_file = ".env"
