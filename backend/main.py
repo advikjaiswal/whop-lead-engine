@@ -120,5 +120,6 @@ async def root():
     return {
         "message": "Welcome to Whop Lead Engine API",
         "documentation": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "status": "ready"
     }
