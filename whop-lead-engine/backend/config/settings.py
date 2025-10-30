@@ -1,0 +1,58 @@
+from pydantic_settings import BaseSettings
+from typing import List, Optional
+from functools import lru_cache
+
+
+class Settings(BaseSettings):
+    # Database
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/whop_lead_engine"
+    
+    # Authentication
+    JWT_SECRET: str = "your-super-secret-jwt-key-here"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRATION_HOURS: int = 24
+    
+    # OpenAI
+    OPENAI_API_KEY: str = ""
+    
+    # Stripe
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    
+    # Supabase
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_KEY: Optional[str] = None
+    
+    # Email Service
+    RESEND_API_KEY: str = ""
+    
+    # External APIs
+    REDDIT_CLIENT_ID: str = ""
+    REDDIT_CLIENT_SECRET: str = ""
+    TWITTER_BEARER_TOKEN: str = ""
+    
+    # Whop API
+    WHOP_API_KEY: str = ""
+    WHOP_API_URL: str = "https://api.whop.com/v1"
+    
+    # Application Settings
+    ENVIRONMENT: str = "development"
+    FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_URL: str = "http://localhost:8000"
+    PLATFORM_REVENUE_SHARE: float = 0.15
+    
+    # CORS
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    
+    # Redis
+    REDIS_URL: str = "redis://localhost:6379"
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()
