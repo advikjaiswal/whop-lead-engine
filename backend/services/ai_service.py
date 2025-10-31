@@ -45,7 +45,7 @@ class AIService:
             - Professional background or interests
             """
             
-            response = await self.client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert at analyzing potential leads for online communities and membership businesses. Provide accurate, actionable insights."},
@@ -108,7 +108,7 @@ class AIService:
             Return only the personalized message, no explanations.
             """
             
-            response = await self.client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert copywriter specializing in personalized outreach for online communities."},
@@ -158,7 +158,7 @@ class AIService:
             Return only the message content, no subject line.
             """
             
-            response = await self.client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert at crafting empathetic retention messages for online communities."},

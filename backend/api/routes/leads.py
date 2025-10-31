@@ -52,7 +52,7 @@ async def get_leads(
     total_pages = ceil(total / per_page)
     
     return LeadListResponse(
-        leads=[LeadResponse.from_orm(lead) for lead in leads],
+        leads=[LeadResponse.model_validate(lead) for lead in leads],
         total=total,
         page=page,
         per_page=per_page,
@@ -119,7 +119,7 @@ async def create_lead(
     
     logger.info(f"Created lead {lead.id} for user {current_user.id}")
     
-    return LeadResponse.from_orm(lead)
+    return LeadResponse.model_validate(lead)
 
 
 @router.post("/import", response_model=List[LeadResponse])
@@ -168,7 +168,7 @@ async def import_leads(
             db.commit()
             db.refresh(lead)
             
-            created_leads.append(LeadResponse.from_orm(lead))
+            created_leads.append(LeadResponse.model_validate(lead))
             
         except Exception as e:
             errors.append(f"Failed to create lead: {str(e)}")
@@ -197,7 +197,7 @@ async def get_lead(
     if not lead:
         raise NotFoundError("Lead not found")
     
-    return LeadResponse.from_orm(lead)
+    return LeadResponse.model_validate(lead)
 
 
 @router.put("/{lead_id}", response_model=LeadResponse)
@@ -234,7 +234,7 @@ async def update_lead(
     
     logger.info(f"Updated lead {lead.id} for user {current_user.id}")
     
-    return LeadResponse.from_orm(lead)
+    return LeadResponse.model_validate(lead)
 
 
 @router.delete("/{lead_id}")
@@ -336,7 +336,7 @@ async def analyze_leads(
             except Exception as e:
                 logger.error(f"Failed to analyze lead {lead.id}: {e}")
             
-            created_leads.append(LeadResponse.from_orm(lead))
+            created_leads.append(LeadResponse.model_validate(lead))
             
         except Exception as e:
             logger.error(f"Failed to create lead: {e}")

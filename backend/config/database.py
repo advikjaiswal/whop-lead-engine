@@ -7,8 +7,16 @@ from loguru import logger
 settings = get_settings()
 
 # Debug: Log the DATABASE_URL (without sensitive info)
-masked_url = settings.DATABASE_URL.replace(settings.DATABASE_URL.split('@')[0].split('//')[1], '***:***') if '@' in settings.DATABASE_URL else settings.DATABASE_URL
-logger.info(f"Using DATABASE_URL: {masked_url}")
+try:
+    if '@' in settings.DATABASE_URL:
+        url_parts = settings.DATABASE_URL.split('@')
+        masked_url = settings.DATABASE_URL.replace(url_parts[0].split('//')[1], '***:***')
+    else:
+        masked_url = settings.DATABASE_URL
+    logger.info(f"Using DATABASE_URL: {masked_url}")
+except Exception as e:
+    logger.warning(f"Could not mask DATABASE_URL for logging: {e}")
+    logger.info("DATABASE_URL is configured")
 
 # Create database engine with error handling
 try:
