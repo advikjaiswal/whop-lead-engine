@@ -38,9 +38,9 @@ class Settings(BaseSettings):
     WHOP_API_URL: str = "https://api.whop.com/v1"
     
     # Application Settings
-    ENVIRONMENT: str = "development"
-    FRONTEND_URL: str = "http://localhost:3000"
-    BACKEND_URL: str = "http://localhost:8000"
+    ENVIRONMENT: str = "production"
+    FRONTEND_URL: str = "https://whop-lead-engine-production.up.railway.app"
+    BACKEND_URL: str = "https://whop-lead-engine-production.up.railway.app"
     PLATFORM_REVENUE_SHARE: float = 0.15
     
     # CORS - Allow Railway and localhost
