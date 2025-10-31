@@ -48,7 +48,8 @@ class Settings(BaseSettings):
         "http://localhost:3000", 
         "http://localhost:3001",
         "https://*.railway.app",
-        "https://*.up.railway.app"
+        "https://*.up.railway.app",
+        "https://whop-lead-engine-production.up.railway.app"
     ]
     
     # Redis - Railway provides REDIS_URL if Redis is added
