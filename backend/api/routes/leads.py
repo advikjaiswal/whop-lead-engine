@@ -14,8 +14,7 @@ from schemas.leads import (
 )
 from utils.auth import get_current_active_user
 from utils.exceptions import NotFoundError, ValidationError
-from services.ai_service import AIService
-from services.lead_scraper import LeadScraperService
+from services.lead_discovery import LeadDiscoveryService, LeadCriteriaService
 
 router = APIRouter()
 
@@ -261,86 +260,103 @@ async def delete_lead(
     return {"message": "Lead deleted successfully"}
 
 
-@router.post("/analyze", response_model=List[LeadResponse])
-async def analyze_leads(
-    analyze_request: LeadAnalyzeRequest,
+@router.post("/discover", response_model=List[LeadResponse])
+async def discover_leads(
+    criteria: dict,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Analyze and import leads from external sources"""
+    """Discover new leads based on user criteria"""
     
-    scraper_service = LeadScraperService()
-    ai_service = AIService()
-    
-    leads_data = []
-    
-    # Scrape leads from different sources
-    for source in analyze_request.sources:
-        try:
-            if source == LeadSource.REDDIT:
-                scraped_leads = await scraper_service.scrape_reddit(
-                    keywords=analyze_request.keywords,
-                    max_results=analyze_request.max_leads // len(analyze_request.sources)
-                )
-                leads_data.extend(scraped_leads)
-            elif source == LeadSource.TWITTER:
-                scraped_leads = await scraper_service.scrape_twitter(
-                    keywords=analyze_request.keywords,
-                    max_results=analyze_request.max_leads // len(analyze_request.sources)
-                )
-                leads_data.extend(scraped_leads)
-            # Add more sources as needed
-        except Exception as e:
-            logger.error(f"Failed to scrape {source}: {e}")
-    
-    # Create and analyze leads
-    created_leads = []
-    
-    for lead_data in leads_data[:analyze_request.max_leads]:
-        try:
-            # Check for duplicates
-            existing_lead = db.query(Lead).filter(
-                Lead.user_id == current_user.id,
-                Lead.username == lead_data.get('username'),
-                Lead.source == lead_data.get('source')
-            ).first()
-            
-            if existing_lead:
-                continue
-            
-            # Create lead
-            lead = Lead(
-                user_id=current_user.id,
-                name=lead_data.get('name'),
-                username=lead_data.get('username'),
-                profile_url=lead_data.get('profile_url'),
-                source=lead_data.get('source')
+    try:
+        # Get OpenAI API key from settings
+        from config.settings import get_settings
+        settings = get_settings()
+        
+        if not settings.OPENAI_API_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="OpenAI API key not configured"
             )
-            
-            db.add(lead)
-            db.commit()
-            db.refresh(lead)
-            
-            # Analyze with AI
+        
+        # Initialize lead discovery service
+        discovery_service = LeadDiscoveryService(settings.OPENAI_API_KEY)
+        
+        # Validate criteria
+        if not LeadCriteriaService.validate_criteria(criteria):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid criteria provided"
+            )
+        
+        # Discover leads
+        discovered_leads = await discovery_service.discover_leads(criteria)
+        
+        # Save discovered leads to database
+        created_leads = []
+        
+        for lead_data in discovered_leads:
             try:
-                analysis = await ai_service.analyze_lead(lead)
-                lead.intent_score = analysis.get('intent_score', 0.0)
-                lead.quality_grade = analysis.get('quality_grade', 'D')
-                lead.interests = json.dumps(analysis.get('interests', []))
-                lead.pain_points = json.dumps(analysis.get('pain_points', []))
-                lead.ai_summary = analysis.get('summary', '')
-                lead.personalization_data = json.dumps(analysis.get('personalization_data', {}))
+                # Check for duplicates by external_id or username
+                existing_lead = db.query(Lead).filter(
+                    Lead.user_id == current_user.id,
+                    Lead.external_id == lead_data.get('id')
+                ).first()
                 
+                if existing_lead:
+                    continue
+                
+                # Create lead record
+                lead = Lead(
+                    user_id=current_user.id,
+                    external_id=lead_data.get('id'),
+                    name=lead_data.get('name', lead_data.get('username', 'Unknown')),
+                    username=lead_data.get('username'),
+                    source=LeadSource(lead_data.get('source')),
+                    url=lead_data.get('url'),
+                    content=lead_data.get('content', ''),
+                    intent_score=lead_data.get('intent_score', 0.0),
+                    quality_grade=lead_data.get('quality_grade', 'D'),
+                    summary=lead_data.get('summary', ''),
+                    interests=lead_data.get('interests', []),
+                    pain_points=lead_data.get('pain_points', []),
+                    personalization_data=lead_data.get('personalization_data', {}),
+                    platform_data=lead_data.get('platform_data', {}),
+                    discovered_at=lead_data.get('discovered_at', lead_data.get('created_at'))
+                )
+                
+                db.add(lead)
                 db.commit()
                 db.refresh(lead)
+                
+                created_leads.append(LeadResponse.model_validate(lead))
+                
             except Exception as e:
-                logger.error(f"Failed to analyze lead {lead.id}: {e}")
-            
-            created_leads.append(LeadResponse.model_validate(lead))
-            
-        except Exception as e:
-            logger.error(f"Failed to create lead: {e}")
+                logger.error(f"Failed to save discovered lead: {e}")
+                continue
+        
+        logger.info(f"Discovered and saved {len(created_leads)} new leads for user {current_user.id}")
+        
+        return created_leads
+        
+    except Exception as e:
+        logger.error(f"Lead discovery failed for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Lead discovery failed: {str(e)}"
+        )
+
+
+@router.post("/criteria/templates/{niche}")
+async def get_criteria_template(
+    niche: str,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get default criteria template for a specific niche"""
     
-    logger.info(f"Analyzed and created {len(created_leads)} leads for user {current_user.id}")
+    template = LeadCriteriaService.get_default_criteria(niche.lower())
     
-    return created_leads
+    return {
+        "niche": niche,
+        "template": template
+    }

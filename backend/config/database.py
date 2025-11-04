@@ -20,13 +20,20 @@ except Exception as e:
 
 # Create database engine with error handling
 try:
-    engine = create_engine(
-        settings.DATABASE_URL,
-        pool_pre_ping=True,
-        pool_size=5,  # Reduced for Railway
-        max_overflow=10,  # Reduced for Railway
-        connect_args={"sslmode": "require"} if "railway" in settings.DATABASE_URL else {}
-    )
+    # Different configs for different database types
+    if settings.DATABASE_URL.startswith("sqlite"):
+        engine = create_engine(
+            settings.DATABASE_URL,
+            connect_args={"check_same_thread": False}  # Required for SQLite
+        )
+    else:
+        engine = create_engine(
+            settings.DATABASE_URL,
+            pool_pre_ping=True,
+            pool_size=5,  # Reduced for Railway
+            max_overflow=10,  # Reduced for Railway
+            connect_args={"sslmode": "require"} if "railway" in settings.DATABASE_URL else {}
+        )
     logger.info("Database engine created successfully")
 except Exception as e:
     logger.error(f"Failed to create database engine: {e}")

@@ -1,6 +1,6 @@
 import httpx
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from loguru import logger
 from config.settings import get_settings
 
@@ -19,10 +19,27 @@ class WhopService:
     async def get_community_members(self, community_id: str) -> List[Dict[str, Any]]:
         """Get all members of a Whop community"""
         
-        # TODO: Replace with actual Whop API implementation
-        # For now, return mock data since Whop API access requires actual community
-        logger.warning("Whop API not implemented - returning mock member data")
-        return self._generate_mock_members(community_id)
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/companies/{community_id}/memberships",
+                    headers=self.headers,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    logger.info(f"Successfully fetched {len(data.get('data', []))} members from Whop API")
+                    return data.get('data', [])
+                else:
+                    logger.warning(f"Whop API request failed with status {response.status_code}: {response.text}")
+                    logger.warning("Falling back to mock member data")
+                    return self._generate_mock_members(community_id)
+                    
+        except Exception as e:
+            logger.error(f"Error fetching members from Whop API: {e}")
+            logger.warning("Falling back to mock member data")
+            return self._generate_mock_members(community_id)
     
     async def get_member_activity(self, member_id: str) -> Dict[str, Any]:
         """Get activity data for a specific member"""
@@ -134,9 +151,9 @@ class WhopService:
                 "status": "active" if i % 10 != 0 else "inactive",  # 10% inactive
                 "tier": "premium" if i % 3 == 0 else "basic",
                 "monthly_revenue": 49.99 if i % 3 == 0 else 29.99,
-                "joined_at": datetime.now().isoformat(),
-                "last_login": (datetime.now()).isoformat() if i % 5 != 0 else None,
-                "last_message": (datetime.now()).isoformat() if i % 4 != 0 else None,
+                "joined_at": datetime.now() - timedelta(days=days_ago),
+                "last_login": datetime.now() - timedelta(hours=i) if i % 5 != 0 else None,
+                "last_message": datetime.now() - timedelta(hours=i*2) if i % 4 != 0 else None,
                 "total_messages": max(0, 50 - (i * 2))  # Decreasing activity
             })
         

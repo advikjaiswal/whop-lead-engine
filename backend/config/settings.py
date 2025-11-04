@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     
     # OpenAI
     OPENAI_API_KEY: str = ""
+    OPENAI_DASHBOARD_API_KEY: str = ""
     
     # Stripe
     STRIPE_SECRET_KEY: str = ""
@@ -35,7 +36,13 @@ class Settings(BaseSettings):
     
     # Whop API
     WHOP_API_KEY: str = ""
+    WHOP_DASHBOARD_API_KEY: str = ""
     WHOP_API_URL: str = "https://api.whop.com/v1"
+    
+    # Frontend Whop Configuration
+    NEXT_PUBLIC_WHOP_APP_ID: Optional[str] = None
+    NEXT_PUBLIC_WHOP_AGENT_USER_ID: Optional[str] = None
+    NEXT_PUBLIC_WHOP_COMPANY_ID: Optional[str] = None
     
     # Application Settings
     ENVIRONMENT: str = "production"

@@ -40,3 +40,4 @@ class User(Base):
     outreach_campaigns = relationship("OutreachCampaign", back_populates="user")
     members = relationship("Member", back_populates="user")
     analytics = relationship("Analytics", back_populates="user")
+    lead_criteria = relationship("LeadCriteria", back_populates="user")
