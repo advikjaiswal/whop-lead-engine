@@ -46,17 +46,19 @@ class Settings(BaseSettings):
     
     # Application Settings
     ENVIRONMENT: str = "production"
-    FRONTEND_URL: str = "https://whop-lead-engine-production.up.railway.app"
+    FRONTEND_URL: str = "https://whop-lead-oeh3dhbj6-adviks-projects-3874d3e7.vercel.app"
     BACKEND_URL: str = "https://whop-lead-engine-production.up.railway.app"
     PLATFORM_REVENUE_SHARE: float = 0.15
     
-    # CORS - Allow Railway and localhost
+    # CORS - Allow Railway, Vercel and localhost
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000", 
         "http://localhost:3001",
         "https://*.railway.app",
         "https://*.up.railway.app",
-        "https://whop-lead-engine-production.up.railway.app"
+        "https://whop-lead-engine-production.up.railway.app",
+        "https://whop-lead-oeh3dhbj6-adviks-projects-3874d3e7.vercel.app",
+        "https://*.vercel.app"
     ]
     
     # Redis - Railway provides REDIS_URL if Redis is added
