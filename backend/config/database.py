@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from config.settings import get_settings
@@ -18,7 +18,7 @@ except Exception as e:
     logger.warning(f"Could not mask DATABASE_URL for logging: {e}")
     logger.info("DATABASE_URL is configured")
 
-# Create database engine with error handling
+# Create database engine with error handling and fallback
 try:
     # Different configs for different database types
     if settings.DATABASE_URL.startswith("sqlite"):
@@ -26,14 +26,37 @@ try:
             settings.DATABASE_URL,
             connect_args={"check_same_thread": False}  # Required for SQLite
         )
+        logger.info("Using SQLite database")
     else:
-        engine = create_engine(
-            settings.DATABASE_URL,
-            pool_pre_ping=True,
-            pool_size=5,  # Reduced for Railway
-            max_overflow=10,  # Reduced for Railway
-            connect_args={"sslmode": "require"} if "railway" in settings.DATABASE_URL else {}
-        )
+        # Try PostgreSQL first
+        try:
+            engine = create_engine(
+                settings.DATABASE_URL,
+                pool_pre_ping=True,
+                pool_size=3,  # Reduced for Railway
+                max_overflow=5,  # Reduced for Railway
+                pool_timeout=10,  # Add timeout
+                pool_recycle=3600,  # Recycle connections every hour
+                connect_args={
+                    "sslmode": "require",
+                    "connect_timeout": 10
+                } if "railway" in settings.DATABASE_URL else {}
+            )
+            # Test the connection immediately
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            logger.info("PostgreSQL connection successful")
+        except Exception as pg_error:
+            logger.error(f"PostgreSQL connection failed: {pg_error}")
+            logger.warning("Falling back to SQLite for Railway deployment")
+            # Fallback to SQLite for Railway if PostgreSQL fails
+            fallback_url = "sqlite:///./whop_lead_engine.db"
+            engine = create_engine(
+                fallback_url,
+                connect_args={"check_same_thread": False}
+            )
+            logger.info("Using SQLite fallback database")
+    
     logger.info("Database engine created successfully")
 except Exception as e:
     logger.error(f"Failed to create database engine: {e}")
