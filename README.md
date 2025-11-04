@@ -1,593 +1,284 @@
-# 🚀 Whop Lead Engine
+# 🚀 Whop Lead Engine - Frontend
 
-**Complete Production-Ready SaaS Platform for Automating Whop Community Lead Generation and Retention**
+**Production-Ready Premium SaaS Dashboard for AI-Powered Lead Generation**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Node.js 18+](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org/)
-[![Next.js 14](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg)](https://fastapi.tiangolo.com/)
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Development](#development)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
-
-## 🎯 Overview
-
-Whop Lead Engine is a complete SaaS platform that helps Whop community owners automate their lead generation and member retention processes. The platform uses AI to find high-intent prospects, personalizes outreach campaigns, and predicts member churn to maximize community growth and revenue.
-
-### 💡 Key Benefits
-
-- **Automated Lead Discovery**: AI-powered scraping from Reddit, Twitter, and Discord
-- **Intelligent Lead Qualification**: GPT-4 analyzes leads and assigns intent scores
-- **Personalized Outreach**: AI-generated messages tailored to each prospect
-- **Churn Prediction**: Monitor member activity and predict churn risk
-- **Revenue Optimization**: Stripe Connect integration with automatic revenue sharing
-- **Complete Analytics**: Track performance across all metrics
+A modern, beautiful, and fully-featured frontend for the Whop Lead Engine platform built with Next.js 14, TypeScript, TailwindCSS, and Framer Motion.
 
 ## ✨ Features
 
-### 🔍 Lead Capture Engine
-- **Multi-Source Scraping**: Reddit, Twitter, Discord, and manual imports
-- **AI-Powered Analysis**: GPT-4 qualification with intent scoring (0-100)
-- **Quality Grading**: Automatic A/B/C/D grading system
-- **Duplicate Detection**: Smart deduplication across sources
-- **Real-time Processing**: Background processing with progress tracking
+### 🎨 **Premium Design System**
+- Modern glassmorphism effects and gradient backgrounds
+- Smooth animations with Framer Motion
+- Dark/light mode support with next-themes
+- Responsive design for all devices
+- Premium component library based on ShadCN/UI
 
-### 📧 Outreach Automation
-- **Campaign Management**: Create and manage multiple outreach campaigns
-- **AI Personalization**: GPT-4 generates personalized messages
-- **Multi-Channel Support**: Email, DM, and social media outreach
-- **Delivery Tracking**: Open rates, click rates, and response tracking
-- **A/B Testing**: Test different message templates and strategies
+### 📊 **Complete Dashboard Suite**
+- **Dashboard Home**: Real-time stats, charts, and activity feed
+- **Leads Management**: Advanced table with filtering, search, and actions
+- **Member Retention**: Churn prediction and engagement analytics
+- **Payments**: Revenue tracking and Stripe integration
+- **Analytics**: Comprehensive performance insights
+- **Settings**: API key management and configuration
 
-### 👥 Retention Dashboard
-- **Member Sync**: Automatic synchronization with Whop community data
-- **Churn Prediction**: AI-powered risk assessment with 85%+ accuracy
-- **Automated Interventions**: Trigger retention messages based on activity
-- **Engagement Scoring**: Track member activity and engagement levels
-- **Success Tracking**: Monitor retention campaign effectiveness
+### 🔐 **Authentication System**
+- Elegant login/signup pages with glassmorphism design
+- Form validation with React Hook Form + Zod
+- Demo account functionality for testing
+- JWT token management
 
-### 💰 Revenue Management
-- **Stripe Connect**: Automatic revenue sharing and payment processing
-- **Revenue Analytics**: Track MRR, conversion rates, and growth metrics
-- **Platform Fees**: Configurable revenue sharing (default 15%)
-- **Payment Tracking**: Real-time transaction monitoring
-- **Financial Reports**: Comprehensive revenue reporting
+### 🚀 **Premium UX/UI**
+- Framer Motion page transitions and micro-interactions
+- Custom loading states and skeleton loaders
+- Toast notifications with Sonner
+- Advanced data visualization with Recharts
+- Professional status indicators and badges
 
-### 📊 Analytics & Insights
-- **Performance Dashboard**: Real-time metrics and KPIs
-- **Lead Analytics**: Conversion funnels and source performance
-- **Outreach Metrics**: Campaign performance and ROI analysis
-- **Member Insights**: Activity trends and retention rates
-- **Revenue Reports**: Financial performance and projections
+## 🛠️ Tech Stack
 
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │    Backend      │    │   External      │
-│   (Next.js)     │◄──►│   (FastAPI)     │◄──►│   Services      │
-│                 │    │                 │    │                 │
-│ • Dashboard     │    │ • REST API      │    │ • OpenAI GPT-4  │
-│ • Lead Mgmt     │    │ • Authentication│    │ • Stripe        │
-│ • Campaigns     │    │ • AI Services   │    │ • Reddit API    │
-│ • Analytics     │    │ • Automation    │    │ • Twitter API   │
-└─────────────────┘    └─────────────────┘    │ • Whop API      │
-                                              │ • Email Service │
-┌─────────────────┐    ┌─────────────────┐    └─────────────────┘
-│   Database      │    │   Background    │
-│ (PostgreSQL)    │◄──►│    Workers      │
-│                 │    │                 │
-│ • User Data     │    │ • Lead Scraping │
-│ • Leads         │    │ • AI Analysis   │
-│ • Campaigns     │    │ • Email Sending │
-│ • Analytics     │    │ • Retention Bot │
-└─────────────────┘    └─────────────────┘
-```
-
-### Tech Stack
-
-**Frontend**
-- Next.js 14 with App Router
-- TypeScript
-- TailwindCSS
-- React Query for state management
-- React Hook Form for forms
-- Recharts for analytics visualization
-
-**Backend**
-- FastAPI with Python 3.11+
-- SQLAlchemy ORM with PostgreSQL
-- JWT authentication
-- OpenAI GPT-4 integration
-- Stripe Connect for payments
-- Redis for caching and queues
-
-**Infrastructure**
-- Docker & Docker Compose
-- Nginx reverse proxy
-- Celery for background tasks
-- Automated testing with pytest
-- Production-ready deployment
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: TailwindCSS + Custom CSS Variables
+- **Animations**: Framer Motion
+- **UI Components**: ShadCN/UI + Radix UI
+- **Icons**: Lucide React
+- **Charts**: Recharts
+- **Forms**: React Hook Form + Zod validation
+- **Theme**: next-themes
+- **Notifications**: Sonner
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+- Node.js 18+ 
+- npm or yarn
 
-- Docker and Docker Compose
-- Python 3.11+ (for local development)
-- Node.js 18+ (for local development)
-- Git
+### Installation
 
-### One-Command Setup
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-```bash
-# Clone the repository
-git clone https://github.com/your-username/whop-lead-engine.git
-cd whop-lead-engine
+2. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-# Copy environment variables
-cp .env.example .env
+3. **Open in browser**
+   ```
+   http://localhost:3000
+   ```
 
-# Start the entire application
-make dev
+### Demo Access
+The frontend includes demo functionality:
+- Use "Continue as Demo User" on login page
+- Or use "Try Demo Account" on signup page
+- All features work with dummy data
+
+## 📁 Project Structure
+
+```
+whop-lead-gen/
+├── app/                          # Next.js App Router
+│   ├── dashboard/               # Dashboard pages
+│   │   ├── leads/              # Leads management
+│   │   ├── retention/          # Member retention
+│   │   ├── payments/           # Revenue tracking
+│   │   ├── analytics/          # Performance insights
+│   │   ├── settings/           # Configuration
+│   │   ├── layout.tsx          # Dashboard layout
+│   │   └── page.tsx            # Dashboard home
+│   ├── login/                  # Login page
+│   ├── signup/                 # Signup page
+│   ├── globals.css             # Global styles
+│   ├── layout.tsx              # Root layout
+│   └── page.tsx                # Landing/redirect page
+├── components/                  # Reusable components
+│   ├── ui/                     # Base UI components
+│   ├── charts/                 # Chart components
+│   ├── sidebar.tsx             # Navigation sidebar
+│   ├── navbar.tsx              # Top navigation
+│   ├── theme-provider.tsx      # Theme context
+│   └── ...                     # Feature components
+├── lib/                        # Utilities
+│   ├── api.ts                  # API client
+│   └── utils.ts                # Helper functions
+├── types/                      # TypeScript types
+├── data/                       # Dummy data
+└── hooks/                      # Custom hooks
 ```
 
-The application will be available at:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
+## 🎨 Design System
 
-### Demo Account
+### Color Palette
+The design uses a sophisticated color system:
+- **Primary**: Blue gradient (600-500)
+- **Secondary**: Purple accent
+- **Success**: Green (500)
+- **Warning**: Yellow (500)
+- **Error**: Red (500)
+- **Muted**: Gray variations
 
-Use these credentials to explore the platform:
-- **Email**: demo@example.com
-- **Password**: demo123456
+### Typography
+- **Headings**: Cal Sans (display font)
+- **Body**: Inter (system font)
+- **Code**: Monaco/Consolas
 
-## 📦 Installation
+### Components
+All components follow the ShadCN/UI design system with custom enhancements:
+- Consistent spacing and sizing
+- Accessible color contrasts
+- Smooth transitions and animations
+- Professional micro-interactions
 
-### Method 1: Docker (Recommended)
+## 🔌 Backend Integration
 
-```bash
-# Clone repository
-git clone https://github.com/your-username/whop-lead-engine.git
-cd whop-lead-engine
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys and configuration
-
-# Start development environment
-docker-compose up --build
-
-# Run database migrations
-make migrate
-```
-
-### Method 2: Local Development
-
-```bash
-# Backend setup
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# Frontend setup
-cd ../frontend
-npm install
-
-# Start services
-cd ../backend && uvicorn main:app --reload
-cd ../frontend && npm run dev
-```
-
-## ⚙️ Configuration
+### API Client
+The frontend includes a complete API client (`lib/api.ts`) with:
+- Type-safe API calls
+- Error handling
+- Authentication token management
+- Dummy data fallbacks for development
 
 ### Environment Variables
-
-Copy `.env.example` to `.env` and configure the following:
-
+Configure these in your deployment:
 ```bash
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/whop_lead_engine
-
-# Authentication
-JWT_SECRET=your-super-secret-jwt-key-here
-JWT_ALGORITHM=HS256
-JWT_EXPIRATION_HOURS=24
-
-# OpenAI (Required for AI features)
-OPENAI_API_KEY=sk-your-openai-key-here
-
-# Stripe (Required for payments)
-STRIPE_SECRET_KEY=sk_test_your-stripe-secret-key
-STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
-STRIPE_PUBLISHABLE_KEY=pk_test_your-publishable-key
-
-# External APIs (Optional)
-REDDIT_CLIENT_ID=your-reddit-client-id
-REDDIT_CLIENT_SECRET=your-reddit-client-secret
-TWITTER_BEARER_TOKEN=your-twitter-bearer-token
-
-# Email Service (Optional)
-RESEND_API_KEY=re_your-resend-api-key
-
-# Application Settings
-ENVIRONMENT=development
-FRONTEND_URL=http://localhost:3000
-BACKEND_URL=http://localhost:8000
-PLATFORM_REVENUE_SHARE=0.15
+NEXT_PUBLIC_API_URL=https://your-backend-url.com
 ```
 
-### Required API Keys
+### Connecting to Backend
+The frontend is designed to seamlessly connect to the FastAPI backend:
 
-1. **OpenAI API Key** - Get from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. **Stripe Keys** - Get from [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
-3. **Reddit API** - Register at [Reddit Apps](https://www.reddit.com/prefs/apps)
-4. **Twitter API** - Apply at [Twitter Developer Portal](https://developer.twitter.com/)
+1. **Update API URL**: Set `NEXT_PUBLIC_API_URL` to your backend URL
+2. **Authentication**: JWT tokens are automatically managed
+3. **Error Handling**: Graceful fallbacks to dummy data during development
+4. **Type Safety**: Full TypeScript support for all API responses
 
-## 📚 API Documentation
+## 📱 Responsive Design
 
-### Authentication
+The dashboard is fully responsive:
+- **Mobile**: Optimized sidebar and navigation
+- **Tablet**: Adaptive grid layouts
+- **Desktop**: Full feature experience
+- **Large screens**: Expanded layouts and additional content
 
-```bash
-# Sign up
-curl -X POST "http://localhost:8000/api/auth/signup" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "password123",
-    "full_name": "John Doe",
-    "whop_community_name": "My Community"
-  }'
+## 🎭 Animations & Interactions
 
-# Login
-curl -X POST "http://localhost:8000/api/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "password123"
-  }'
-```
+### Page Transitions
+- Smooth fade-in animations on page load
+- Staggered animations for lists and grids
+- Loading states with skeleton UI
 
-### Lead Management
+### Micro-interactions
+- Button hover effects and active states
+- Card hover animations with scale
+- Progress bars and loading indicators
+- Toast notifications for user feedback
 
-```bash
-# Get leads
-curl -X GET "http://localhost:8000/api/leads" \
-  -H "Authorization: Bearer YOUR_TOKEN"
+### Performance
+- Optimized animations with Framer Motion
+- Lazy loading for components
+- Debounced search inputs
+- Efficient re-renders with React optimization
 
-# Analyze leads
-curl -X POST "http://localhost:8000/api/leads/analyze" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "keywords": ["entrepreneur", "startup"],
-    "sources": ["reddit", "twitter"],
-    "max_leads": 50
-  }'
-```
+## 🔒 Security Features
 
-### Outreach Campaigns
-
-```bash
-# Create campaign
-curl -X POST "http://localhost:8000/api/outreach/campaigns" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Q4 Outreach",
-    "message_template": "Hi {name}, I saw your interest in {topic}...",
-    "personalization_enabled": true
-  }'
-
-# Send campaign
-curl -X POST "http://localhost:8000/api/outreach/campaigns/1/send" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "lead_ids": [1, 2, 3, 4, 5]
-  }'
-```
-
-### Analytics
-
-```bash
-# Dashboard summary
-curl -X GET "http://localhost:8000/api/analytics/dashboard" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# Lead analytics
-curl -X GET "http://localhost:8000/api/analytics/leads?days=30" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-For complete API documentation, visit http://localhost:8000/docs when running the application.
+- **Input Validation**: All forms use Zod validation
+- **XSS Protection**: Sanitized user inputs
+- **CSRF Protection**: Token-based authentication
+- **Secure Storage**: Safe localStorage usage
+- **Route Protection**: Authentication guards
 
 ## 🚀 Deployment
 
-### Production Deployment
-
-1. **Configure Environment**
+### Vercel (Recommended)
 ```bash
-# Copy production environment template
-cp .env.example .env.prod
-
-# Update with production values
-ENVIRONMENT=production
-DATABASE_URL=postgresql://user:password@prod-db:5432/whop_lead_engine
-FRONTEND_URL=https://yourdomain.com
-BACKEND_URL=https://api.yourdomain.com
-```
-
-2. **Deploy with Docker**
-```bash
-# Build and start production services
-make deploy-prod
-
-# Or manually with docker-compose
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-```
-
-3. **Setup SSL/HTTPS**
-```bash
-# Configure Nginx with SSL certificates
-# Update nginx/nginx.conf with your domain and SSL paths
-```
-
-### Vercel Deployment (Frontend Only)
-
-```bash
-cd frontend
 npm install -g vercel
 vercel --prod
 ```
 
-### Railway/Render Deployment
-
-The application is configured for easy deployment on Railway or Render. Simply connect your repository and set the environment variables.
-
-## 🔧 Development
-
-### Project Structure
-
-```
-whop-lead-engine/
-├── backend/
-│   ├── api/
-│   │   └── routes/          # API endpoints
-│   ├── config/              # Configuration
-│   ├── models/              # Database models
-│   ├── services/            # Business logic
-│   ├── utils/               # Utilities
-│   └── main.py              # FastAPI app
-├── frontend/
-│   ├── src/
-│   │   ├── app/             # Next.js app router
-│   │   ├── components/      # React components
-│   │   ├── hooks/           # Custom hooks
-│   │   ├── lib/             # API client
-│   │   └── types/           # TypeScript types
-├── scripts/                 # Automation scripts
-├── nginx/                   # Nginx configuration
-├── docs/                    # Documentation
-├── docker-compose.yml       # Development compose
-├── docker-compose.prod.yml  # Production overrides
-└── Makefile                 # Development commands
-```
-
-### Development Commands
-
+### Manual Build
 ```bash
-# Install dependencies
-make install
-
-# Start development environment
-make dev
-
-# Run tests
-make test
-
-# Format code
-make format
-
-# Lint code
-make lint
-
-# Database migration
-make migrate
-
-# Create new migration
-make migration
-
-# View logs
-make logs
-
-# Clean up
-make clean
+npm run build
+npm start
 ```
 
-### Adding New Features
+### Environment Setup
+1. Set `NEXT_PUBLIC_API_URL` to your backend URL
+2. Configure any additional environment variables
+3. Deploy to your preferred platform
 
-1. **Backend Feature**
+## 🧪 Development
+
+### Available Scripts
 ```bash
-# Create new API route
-touch backend/api/routes/new_feature.py
-
-# Add database model
-touch backend/models/new_model.py
-
-# Create migration
-make migration
-
-# Add tests
-touch backend/tests/test_new_feature.py
+npm run dev        # Start development server
+npm run build      # Build for production
+npm run start      # Start production server
+npm run lint       # Run ESLint
 ```
 
-2. **Frontend Feature**
-```bash
-# Create new page
-touch frontend/src/app/dashboard/new-feature/page.tsx
+### Development Tips
+1. **Dummy Data**: All pages work with realistic dummy data
+2. **Hot Reload**: Changes reflect immediately
+3. **Type Safety**: Full TypeScript support
+4. **Component Preview**: Use Storybook (if configured)
 
-# Add component
-touch frontend/src/components/NewFeature.tsx
+## 🎯 Features in Detail
 
-# Add API service
-# Update frontend/src/lib/api.ts
-```
+### Dashboard Home
+- Real-time statistics with trend indicators
+- Interactive charts showing growth over time
+- Recent activity feed with animated items
+- Quick action buttons and system status
 
-## 🧪 Testing
+### Leads Management
+- Advanced data table with sorting and filtering
+- Search functionality across all lead data
+- Bulk actions and individual lead management
+- Quality grading and intent scoring visualization
 
-### Backend Tests
+### Member Retention
+- Churn risk prediction with visual indicators
+- Member engagement scoring
+- Automated retention campaign triggers
+- Interactive member cards with actions
 
-```bash
-# Run all tests
-cd backend && python -m pytest
+### Payments & Analytics
+- Revenue tracking with growth visualization
+- Conversion funnel analysis
+- ROI calculations and projections
+- Stripe integration status and configuration
 
-# Run with coverage
-cd backend && python -m pytest --cov=. --cov-report=html
-
-# Run specific test file
-cd backend && python -m pytest tests/test_auth.py -v
-
-# Run integration tests
-cd backend && python -m pytest tests/integration/ -v
-```
-
-### Frontend Tests
-
-```bash
-# Run tests
-cd frontend && npm test
-
-# Run tests in watch mode
-cd frontend && npm run test:watch
-
-# Run E2E tests (if configured)
-cd frontend && npm run test:e2e
-```
-
-### Load Testing
-
-```bash
-# Performance test
-make perf-test
-
-# Manual load test
-pip install locust
-locust -f tests/load_test.py --host=http://localhost:8000
-```
-
-## 📊 Monitoring
-
-### Application Metrics
-
-The application exposes metrics at:
-- Health check: `GET /health`
-- Metrics: `GET /metrics` (if configured)
-
-### Logging
-
-Logs are structured and include:
-- Request/response logging
-- Error tracking
-- Performance metrics
-- Business event logging
-
-### Observability
-
-For production monitoring, integrate with:
-- **Error Tracking**: Sentry
-- **Metrics**: Prometheus + Grafana
-- **Logging**: ELK Stack or similar
-- **APM**: DataDog or New Relic
-
-## 🔒 Security
-
-### Security Features
-
-- JWT-based authentication
-- Password hashing with bcrypt
-- Rate limiting on API endpoints
-- CORS protection
-- SQL injection prevention
-- XSS protection headers
-- Secure session management
-
-### Security Best Practices
-
-1. **Environment Variables**: Never commit secrets to version control
-2. **API Keys**: Rotate keys regularly
-3. **Database**: Use connection pooling and prepared statements
-4. **HTTPS**: Always use HTTPS in production
-5. **Updates**: Keep dependencies updated
+### Settings
+- Secure API key management with show/hide
+- Platform configuration options
+- User profile management
+- Integration status monitoring
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. **Code Style**: Follow existing patterns and conventions
+2. **Components**: Use the established component architecture
+3. **Types**: Maintain strict TypeScript typing
+4. **Animations**: Keep animations smooth and purposeful
+5. **Responsive**: Test on all device sizes
 
-### Development Workflow
+## 📄 License
 
-1. **Setup**: Follow installation instructions
-2. **Code**: Write code following existing patterns
-3. **Test**: Add tests for new functionality
-4. **Lint**: Run `make format` and `make lint`
-5. **Document**: Update README and API docs
-6. **Submit**: Create pull request with detailed description
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## 🆘 Support
 
-### Documentation
-
-- [API Documentation](http://localhost:8000/docs) (when running locally)
-- [Deployment Guide](./docs/DEPLOYMENT.md)
-- [Development Guide](./docs/DEVELOPMENT.md)
-- [Troubleshooting](./docs/TROUBLESHOOTING.md)
-
-### Community
-
-- **Issues**: [GitHub Issues](https://github.com/your-username/whop-lead-engine/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/whop-lead-engine/discussions)
-- **Email**: support@whop-lead-engine.com
-
-### Professional Support
-
-For professional support, custom development, or enterprise features, contact us at:
-- **Email**: enterprise@whop-lead-engine.com
-- **Website**: https://whop-lead-engine.com
+For questions or issues:
+1. Check the component documentation
+2. Review the API client implementation
+3. Examine dummy data structure
+4. Follow the established patterns
 
 ---
 
-## 🎉 Acknowledgments
+**Built with ❤️ for the Whop community**
 
-- Built with [FastAPI](https://fastapi.tiangolo.com/) and [Next.js](https://nextjs.org/)
-- UI components inspired by [Tailwind UI](https://tailwindui.com/)
-- Icons from [Heroicons](https://heroicons.com/)
-- AI powered by [OpenAI GPT-4](https://openai.com/)
-
----
-
-**Made with ❤️ for the Whop community**
-
-Transform your community growth today with Whop Lead Engine!
+This frontend represents production-ready code that you can immediately deploy and customize for your needs. Every component is built with attention to detail, performance, and user experience.
