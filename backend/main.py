@@ -16,8 +16,8 @@ from utils.exceptions import AppException
 from models.user import User
 from models.lead import Lead, LeadCriteria
 from models.member import Member
-from models.campaign import Campaign
-from models.analytics import ActivityLog
+from models.outreach import OutreachCampaign
+from models.analytics import Analytics, RevenueTransaction
 
 
 @asynccontextmanager
