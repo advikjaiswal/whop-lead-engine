@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from pydantic import BaseModel
 import time
 import logging
 from loguru import logger
@@ -15,6 +16,12 @@ from utils.exceptions import AppException
 
 # Import essential models for simple signup
 from models.user import User
+
+# Pydantic model for signup request
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str
 
 
 @asynccontextmanager
@@ -87,26 +94,19 @@ async def app_exception_handler(request: Request, exc: AppException):
         content={"error": exc.message, "detail": exc.detail}
     )
 
-# Working POST endpoint with JSON (not form data)
+# Working POST endpoint with proper Pydantic model
 @app.post("/simple-signup")
-async def simple_signup(signup_data: dict):
-    """Working signup endpoint using JSON instead of form data"""
+async def simple_signup(signup_data: SignupRequest):
+    """Working signup endpoint using Pydantic model for proper FastAPI handling"""
     try:
-        email = signup_data.get("email")
-        password = signup_data.get("password") 
-        full_name = signup_data.get("full_name")
-        
-        if not email or not password or not full_name:
-            return {"status": "error", "message": "Missing required fields"}
-        
-        logger.info(f"Signup for: {email}")
+        logger.info(f"Signup for: {signup_data.email}")
         
         # Create actual JWT token (simplified version)
         import jwt
         from datetime import datetime, timedelta
         
         expire = datetime.utcnow() + timedelta(hours=24)
-        token_data = {"sub": "user_" + str(hash(email))[:8], "email": email, "exp": expire}
+        token_data = {"sub": "user_" + str(hash(signup_data.email))[:8], "email": signup_data.email, "exp": expire}
         access_token = jwt.encode(token_data, settings.JWT_SECRET, algorithm="HS256")
         
         return {
@@ -114,9 +114,9 @@ async def simple_signup(signup_data: dict):
             "access_token": access_token,
             "token_type": "bearer",
             "user": {
-                "id": "user_" + str(hash(email))[:8],
-                "email": email,
-                "full_name": full_name
+                "id": "user_" + str(hash(signup_data.email))[:8],
+                "email": signup_data.email,
+                "full_name": signup_data.full_name
             }
         }
             
