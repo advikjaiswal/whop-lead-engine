@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta
 import time
 import logging
-import jwt
 from loguru import logger
 
 from config.settings import get_settings
@@ -103,18 +102,16 @@ async def simple_signup(signup_data: SignupRequest):
     try:
         logger.info(f"Signup for: {signup_data.email}")
         
-        # Create actual JWT token (simplified version)
-        
-        expire = datetime.utcnow() + timedelta(hours=24)
-        token_data = {"sub": "user_" + str(hash(signup_data.email))[:8], "email": signup_data.email, "exp": expire}
-        access_token = jwt.encode(token_data, settings.JWT_SECRET, algorithm="HS256")
+        # Create mock token (Railway has issues with JWT library)
+        user_id = "user_" + str(hash(signup_data.email))[:8]
+        access_token = f"railway_token_{user_id}_{int(time.time())}"
         
         return {
             "status": "success",
             "access_token": access_token,
             "token_type": "bearer",
             "user": {
-                "id": "user_" + str(hash(signup_data.email))[:8],
+                "id": user_id,
                 "email": signup_data.email,
                 "full_name": signup_data.full_name
             }
