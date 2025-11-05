@@ -124,4 +124,4 @@ async def logout(current_user: User = Depends(get_current_active_user)):
 @router.post("/verify-token")
 async def verify_token(current_user: User = Depends(get_current_active_user)):
     """Verify if the provided token is valid"""
-    return {"valid": True, "user": UserResponse.from_orm(current_user)}
+    return {"valid": True, "user": UserResponse.model_validate(current_user)}

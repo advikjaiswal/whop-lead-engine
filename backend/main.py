@@ -9,7 +9,7 @@ from loguru import logger
 
 from config.settings import get_settings
 from config.database import engine, Base
-from api.routes import auth, leads, outreach, members, analytics, stripe_webhook
+from api.routes import leads, outreach, members, analytics, stripe_webhook, auth
 from utils.exceptions import AppException
 
 # Import all models to ensure they are registered with SQLAlchemy

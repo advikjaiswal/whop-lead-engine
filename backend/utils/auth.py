@@ -4,6 +4,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 import jwt
+from jwt.exceptions import InvalidTokenError
 import hashlib
 import secrets
 from config.database import get_db
@@ -81,7 +82,7 @@ async def get_current_user(
             user_id = int(user_id)
         except (ValueError, TypeError):
             raise credentials_exception
-    except JWTError:
+    except InvalidTokenError:
         raise credentials_exception
     
     user = db.query(User).filter(User.id == user_id).first()
