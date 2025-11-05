@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { StatsCard } from "@/components/stats-card"
 import { LeadsTable } from "@/components/leads-table"
-import { LeadDiscoveryModal } from "@/components/lead-discovery-modal"
+import { SimpleLeadDiscovery } from "@/components/simple-lead-discovery"
 import { Lead } from "@/types"
 import { leadsAPI } from "@/lib/api"
 import { toast } from "sonner"
@@ -323,7 +323,7 @@ export default function LeadsPage() {
       />
 
       {/* Lead Discovery Modal */}
-      <LeadDiscoveryModal
+      <SimpleLeadDiscovery
         isOpen={discoveryModalOpen}
         onClose={() => setDiscoveryModalOpen(false)}
         onLeadsDiscovered={handleLeadsDiscovered}
