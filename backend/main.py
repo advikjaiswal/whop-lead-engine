@@ -9,9 +9,8 @@ from loguru import logger
 
 from config.settings import get_settings
 from config.database import engine, Base
-from api.routes import leads, outreach, members, analytics, stripe_webhook
-# Temporarily disable auth import to fix Railway startup
-# from api.routes import auth
+# Temporarily disable ALL route imports to isolate startup issue
+# from api.routes import leads, outreach, members, analytics, stripe_webhook, auth
 from utils.exceptions import AppException
 
 # Import all models to ensure they are registered with SQLAlchemy
@@ -195,14 +194,13 @@ async def health_check():
     return health_data
 
 
-# Include routers
-# Temporarily disable auth router to fix Railway startup
+# Include routers - temporarily disabled to isolate startup issue
 # app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(leads.router, prefix="/api/leads", tags=["Leads"])
-app.include_router(outreach.router, prefix="/api/outreach", tags=["Outreach"])
-app.include_router(members.router, prefix="/api/members", tags=["Members"])
-app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
-app.include_router(stripe_webhook.router, prefix="/api/stripe", tags=["Stripe"])
+# app.include_router(leads.router, prefix="/api/leads", tags=["Leads"])
+# app.include_router(outreach.router, prefix="/api/outreach", tags=["Outreach"])
+# app.include_router(members.router, prefix="/api/members", tags=["Members"])
+# app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+# app.include_router(stripe_webhook.router, prefix="/api/stripe", tags=["Stripe"])
 
 
 @app.get("/")
