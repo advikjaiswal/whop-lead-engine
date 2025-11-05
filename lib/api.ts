@@ -82,19 +82,21 @@ export const authAPI = {
     fullName: string
     whopCommunityName?: string
   }) {
-    // Use simple-signup endpoint with form data
-    const formData = new URLSearchParams()
-    formData.append('email', data.email)
-    formData.append('password', data.password)
-    formData.append('full_name', data.fullName)
+    // Temporary mock signup for demo purposes while Railway backend is being fixed
+    console.log('Demo signup for:', data.email)
     
-    return apiRequest<{ access_token: string; user: any }>('/simple-signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData.toString()
-    })
+    // Return a mock successful response
+    return {
+      success: true,
+      data: {
+        access_token: 'demo_token_' + Date.now(),
+        user: {
+          id: 'demo_user',
+          email: data.email,
+          full_name: data.fullName
+        }
+      }
+    }
   },
   
   async logout() {
