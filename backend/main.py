@@ -105,6 +105,40 @@ async def initialize_database():
         logger.error(f"Database initialization failed: {e}")
         return {"status": "error", "message": f"Database initialization failed: {str(e)}"}
 
+# Debug auth endpoint
+@app.post("/debug-signup")
+async def debug_signup():
+    """Debug signup to test auth dependencies"""
+    try:
+        from utils.auth import get_password_hash
+        from schemas.auth import UserCreate
+        from models.user import User
+        from config.database import SessionLocal
+        
+        # Test password hashing
+        test_password = "test123456"
+        hashed = get_password_hash(test_password)
+        logger.info(f"Password hashing works: {hashed[:20]}...")
+        
+        # Test UserCreate schema
+        user_data = UserCreate(
+            email="debug@test.com",
+            password="test123456", 
+            full_name="Debug User"
+        )
+        logger.info(f"Schema validation works: {user_data.email}")
+        
+        # Test database connection
+        db = SessionLocal()
+        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        db.close()
+        logger.info(f"Database query works, existing user: {existing_user is not None}")
+        
+        return {"status": "success", "message": "All auth components working"}
+    except Exception as e:
+        logger.error(f"Debug signup failed: {e}")
+        return {"status": "error", "message": f"Debug failed: {str(e)}"}
+
 # Health check
 @app.get("/health")
 async def health_check():
