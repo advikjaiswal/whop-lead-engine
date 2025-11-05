@@ -4,8 +4,10 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
+from datetime import datetime, timedelta
 import time
 import logging
+import jwt
 from loguru import logger
 
 from config.settings import get_settings
@@ -102,8 +104,6 @@ async def simple_signup(signup_data: SignupRequest):
         logger.info(f"Signup for: {signup_data.email}")
         
         # Create actual JWT token (simplified version)
-        import jwt
-        from datetime import datetime, timedelta
         
         expire = datetime.utcnow() + timedelta(hours=24)
         token_data = {"sub": "user_" + str(hash(signup_data.email))[:8], "email": signup_data.email, "exp": expire}
