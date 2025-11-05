@@ -82,21 +82,17 @@ export const authAPI = {
     fullName: string
     whopCommunityName?: string
   }) {
-    // Temporary mock signup for demo purposes while Railway backend is being fixed
-    console.log('Demo signup for:', data.email)
-    
-    // Return a mock successful response
-    return {
-      success: true,
-      data: {
-        access_token: 'demo_token_' + Date.now(),
-        user: {
-          id: 'demo_user',
-          email: data.email,
-          full_name: data.fullName
-        }
-      }
+    // Use JSON POST request instead of form data
+    const requestData = {
+      email: data.email,
+      password: data.password,
+      full_name: data.fullName
     }
+    
+    return apiRequest<{ access_token: string; user: any }>('/simple-signup', {
+      method: 'POST',
+      body: JSON.stringify(requestData)
+    })
   },
   
   async logout() {

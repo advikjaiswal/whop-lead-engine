@@ -87,22 +87,42 @@ async def app_exception_handler(request: Request, exc: AppException):
         content={"error": exc.message, "detail": exc.detail}
     )
 
-# Test GET endpoint for signup
-@app.get("/simple-signup-test")
-async def simple_signup_test(email: str = "test@example.com", full_name: str = "Test User"):
-    """Simple GET endpoint for testing Railway connectivity"""
-    logger.info(f"Test signup GET for: {email}")
-    
-    return {
-        "status": "success",
-        "access_token": "test_token_123",
-        "token_type": "bearer",
-        "user": {
-            "id": "test_user",
-            "email": email,
-            "full_name": full_name
+# Working POST endpoint with JSON (not form data)
+@app.post("/simple-signup")
+async def simple_signup(signup_data: dict):
+    """Working signup endpoint using JSON instead of form data"""
+    try:
+        email = signup_data.get("email")
+        password = signup_data.get("password") 
+        full_name = signup_data.get("full_name")
+        
+        if not email or not password or not full_name:
+            return {"status": "error", "message": "Missing required fields"}
+        
+        logger.info(f"Signup for: {email}")
+        
+        # Create actual JWT token (simplified version)
+        import jwt
+        from datetime import datetime, timedelta
+        
+        expire = datetime.utcnow() + timedelta(hours=24)
+        token_data = {"sub": "user_" + str(hash(email))[:8], "email": email, "exp": expire}
+        access_token = jwt.encode(token_data, settings.JWT_SECRET, algorithm="HS256")
+        
+        return {
+            "status": "success",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": "user_" + str(hash(email))[:8],
+                "email": email,
+                "full_name": full_name
+            }
         }
-    }
+            
+    except Exception as e:
+        logger.error(f"Signup failed: {e}")
+        return {"status": "error", "message": f"Signup failed: {str(e)}"}
 
 # Health check
 @app.get("/health")
