@@ -24,15 +24,17 @@ from models.analytics import Analytics, RevenueTransaction
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up Whop Lead Engine...")
+    logger.info(f"Environment: {get_settings().ENVIRONMENT}")
     
     try:
         # Create database tables
+        logger.info("Creating database tables...")
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
     except Exception as e:
         logger.error(f"Database startup failed: {e}")
-        logger.warning("Continuing startup without database - some features will be limited")
-        # Continue startup even if DB fails for health checks
+        logger.warning("Continuing startup - database issues can be resolved via /init-db endpoint")
+        # Continue startup even if DB fails - Railway should still run
     
     yield
     

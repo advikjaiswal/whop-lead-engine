@@ -5,7 +5,7 @@ import os
 
 
 class Settings(BaseSettings):
-    # Database - Railway provides DATABASE_URL automatically
+    # Database - Railway provides DATABASE_URL automatically, fallback to SQLite
     DATABASE_URL: str = "sqlite:///./whop_lead_engine.db"
     
     # Authentication
