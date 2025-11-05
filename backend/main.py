@@ -2,8 +2,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import time
+import os
+from sqlalchemy import create_engine, text
 
 app = FastAPI()
+
+# Database setup - Railway provides DATABASE_URL environment variable
+DATABASE_URL = os.getenv("DATABASE_URL")
+engine = None
+
+if DATABASE_URL:
+    try:
+        engine = create_engine(DATABASE_URL)
+        print(f"Database engine created successfully")
+    except Exception as e:
+        print(f"Database engine creation failed: {e}")
+        engine = None
 
 # Add CORS middleware
 app.add_middleware(
@@ -22,7 +36,24 @@ class SignupRequest(BaseModel):
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy"}
+    health_data = {
+        "status": "healthy",
+        "timestamp": time.time(),
+        "database": "unknown"
+    }
+    
+    # Test database connectivity
+    if engine:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            health_data["database"] = "connected"
+        except Exception as e:
+            health_data["database"] = f"disconnected: {str(e)}"
+    else:
+        health_data["database"] = "no_engine"
+    
+    return health_data
 
 @app.get("/")
 async def root():
