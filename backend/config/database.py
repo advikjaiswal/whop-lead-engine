@@ -33,14 +33,15 @@ try:
             engine = create_engine(
                 settings.DATABASE_URL,
                 pool_pre_ping=True,
-                pool_size=3,  # Reduced for Railway
-                max_overflow=5,  # Reduced for Railway
-                pool_timeout=10,  # Add timeout
-                pool_recycle=3600,  # Recycle connections every hour
+                pool_size=2,  # Reduced for Railway
+                max_overflow=3,  # Reduced for Railway
+                pool_timeout=30,  # Increased timeout
+                pool_recycle=1800,  # Recycle connections every 30 minutes
                 connect_args={
                     "sslmode": "require",
-                    "connect_timeout": 10
-                } if "railway" in settings.DATABASE_URL else {}
+                    "connect_timeout": 30,
+                    "application_name": "whop_lead_engine"
+                } if ("railway" in settings.DATABASE_URL or "postgres" in settings.DATABASE_URL) else {}
             )
             # Test the connection immediately
             with engine.connect() as conn:

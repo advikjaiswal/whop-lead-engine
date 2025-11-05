@@ -6,7 +6,7 @@ import os
 
 class Settings(BaseSettings):
     # Database - Railway provides DATABASE_URL automatically
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/whop_lead_engine"
+    DATABASE_URL: str = "sqlite:///./whop_lead_engine.db"
     
     # Authentication
     JWT_SECRET: str = "your-super-secret-jwt-key-here"
