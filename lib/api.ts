@@ -70,7 +70,7 @@ async function apiRequest<T>(
 // Auth API
 export const authAPI = {
   async login(email: string, password: string) {
-    return apiRequest<{ token: string; user: any }>('/api/auth/login', {
+    return apiRequest<{ access_token: string; token_type: string }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     })
@@ -82,14 +82,13 @@ export const authAPI = {
     fullName: string
     whopCommunityName?: string
   }) {
-    // Use JSON POST request instead of form data
     const requestData = {
       email: data.email,
       password: data.password,
       full_name: data.fullName
     }
     
-    return apiRequest<{ access_token: string; user: any }>('/simple-signup', {
+    return apiRequest<{ access_token: string; user: any }>('/api/auth/signup', {
       method: 'POST',
       body: JSON.stringify(requestData)
     })

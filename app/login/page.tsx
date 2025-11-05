@@ -43,8 +43,8 @@ export default function LoginPage() {
     try {
       const response = await authAPI.login(data.email, data.password)
       
-      if (response.success && response.data?.token) {
-        localStorage.setItem("auth_token", response.data.token)
+      if (response.success && response.data?.access_token) {
+        localStorage.setItem("auth_token", response.data.access_token)
         router.push("/dashboard")
       } else {
         setError(response.error || "Login failed")
