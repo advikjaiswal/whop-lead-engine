@@ -1,7 +1,7 @@
 import { APIResponse, Lead, Campaign, Member, Analytics, DashboardStats } from '@/types'
 
-// API configuration - use working backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// API configuration - use Railway production backend
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://whop-lead-engine-production.up.railway.app'
 
 // Validate API URL
 if (!API_BASE_URL) {

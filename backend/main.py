@@ -12,6 +12,13 @@ from config.database import engine, Base
 from api.routes import auth, leads, outreach, members, analytics, stripe_webhook
 from utils.exceptions import AppException
 
+# Import all models to ensure they are registered with SQLAlchemy
+from models.user import User
+from models.lead import Lead, LeadCriteria
+from models.member import Member
+from models.campaign import Campaign
+from models.analytics import ActivityLog
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -82,6 +89,19 @@ async def app_exception_handler(request: Request, exc: AppException):
         content={"error": exc.message, "detail": exc.detail}
     )
 
+
+# Database initialization endpoint
+@app.post("/init-db")
+async def initialize_database():
+    """Manually initialize database tables"""
+    try:
+        # Create all tables
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created/updated successfully")
+        return {"status": "success", "message": "Database tables created/updated successfully"}
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        return {"status": "error", "message": f"Database initialization failed: {str(e)}"}
 
 # Health check
 @app.get("/health")
