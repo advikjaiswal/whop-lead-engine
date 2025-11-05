@@ -42,7 +42,30 @@ export default function DashboardPage() {
         // Fetch real dashboard stats
         const statsResponse = await analyticsAPI.getDashboardStats()
         if (statsResponse.success && statsResponse.data) {
-          setDashboardStats(statsResponse.data)
+          // Transform API response to match expected structure
+          const apiData = statsResponse.data as any // Cast to any to access backend fields
+          setDashboardStats({
+            leadsGenerated: { 
+              total: apiData.total_leads || 0, 
+              change: apiData.recent_leads || 0, 
+              trend: 'up' as const 
+            },
+            conversions: { 
+              total: apiData.high_quality_leads || 0, 
+              change: 0, 
+              trend: 'neutral' as const 
+            },
+            revenue: { 
+              total: 0, 
+              change: 0, 
+              trend: 'neutral' as const 
+            },
+            retention: { 
+              rate: apiData.quality_rate || 0, 
+              change: 0, 
+              trend: 'neutral' as const 
+            }
+          })
         }
 
         // Set user as authenticated
