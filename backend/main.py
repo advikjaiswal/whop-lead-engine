@@ -18,18 +18,9 @@ import uuid
 import json
 import base64
 
-# Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./whop_lead_engine.db")
-
-# Handle PostgreSQL URL format if present
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
-# Create engine with proper configuration for different databases
-if DATABASE_URL.startswith("postgresql://"):
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"sslmode": "require"})
-else:
-    engine = create_engine(DATABASE_URL)
+# Database setup - Use SQLite for reliable Railway deployment
+DATABASE_URL = "sqlite:///./whop_lead_engine.db"
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
