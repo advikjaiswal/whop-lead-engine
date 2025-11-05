@@ -87,37 +87,22 @@ async def app_exception_handler(request: Request, exc: AppException):
         content={"error": exc.message, "detail": exc.detail}
     )
 
-# Minimal test signup endpoint
-@app.post("/simple-signup")
-async def simple_signup(request: Request):
-    """Minimal signup endpoint for testing Railway connectivity"""
-    try:
-        # Parse form data
-        form_data = await request.form()
-        email = form_data.get("email")
-        password = form_data.get("password") 
-        full_name = form_data.get("full_name")
-        
-        if not email or not password or not full_name:
-            return {"status": "error", "message": "Missing required fields"}
-        
-        logger.info(f"Test signup for: {email}")
-        
-        # Return a simple success response with mock token
-        return {
-            "status": "success",
-            "access_token": "test_token_123",
-            "token_type": "bearer",
-            "user": {
-                "id": "test_user",
-                "email": email,
-                "full_name": full_name
-            }
+# Test GET endpoint for signup
+@app.get("/simple-signup-test")
+async def simple_signup_test(email: str = "test@example.com", full_name: str = "Test User"):
+    """Simple GET endpoint for testing Railway connectivity"""
+    logger.info(f"Test signup GET for: {email}")
+    
+    return {
+        "status": "success",
+        "access_token": "test_token_123",
+        "token_type": "bearer",
+        "user": {
+            "id": "test_user",
+            "email": email,
+            "full_name": full_name
         }
-            
-    except Exception as e:
-        logger.error(f"Simple signup failed: {e}")
-        return {"status": "error", "message": f"Signup failed: {str(e)}"}
+    }
 
 # Health check
 @app.get("/health")
