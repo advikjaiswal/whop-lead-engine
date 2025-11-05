@@ -20,7 +20,16 @@ import base64
 
 # Database setup
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./whop_lead_engine.db")
-engine = create_engine(DATABASE_URL)
+
+# Handle PostgreSQL URL format if present
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Create engine with proper configuration for different databases
+if DATABASE_URL.startswith("postgresql://"):
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"sslmode": "require"})
+else:
+    engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -57,7 +66,13 @@ class Lead(Base):
     discovered_at = Column(DateTime, default=datetime.utcnow)
 
 # Create tables
-Base.metadata.create_all(bind=engine)
+try:
+    print("Creating database tables...")
+    Base.metadata.create_all(bind=engine)
+    print("Database tables created successfully")
+except Exception as e:
+    print(f"Database table creation failed: {e}")
+    print("Continuing startup anyway...")
 
 # Pydantic Models
 class UserCreate(BaseModel):
@@ -105,11 +120,13 @@ class LeadResponse(BaseModel):
     discovered_at: datetime
 
 # FastAPI app
+print("Initializing FastAPI app...")
 app = FastAPI(
     title="Whop Lead Engine API",
     description="Production-ready lead generation system",
     version="1.0.0"
 )
+print("FastAPI app initialized successfully")
 
 # CORS middleware
 app.add_middleware(
