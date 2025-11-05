@@ -3,8 +3,9 @@ from typing import Optional, Union
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import jwt
+import hashlib
+import secrets
 from config.database import get_db
 from config.settings import get_settings
 from models.user import User
@@ -12,24 +13,26 @@ from models.user import User
 settings = get_settings()
 security = HTTPBearer()
 
-# Password hashing - Using argon2 instead of bcrypt for better compatibility
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-
-
+# Simple password hashing using hashlib (no external dependencies)
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    # Truncate password to 72 bytes for bcrypt compatibility
-    if len(plain_password.encode('utf-8')) > 72:
-        plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.verify(plain_password, hashed_password)
+    # Extract salt and hash from stored password
+    if ':' not in hashed_password:
+        return False
+    salt, stored_hash = hashed_password.split(':', 1)
+    # Hash the plain password with the same salt
+    password_hash = hashlib.pbkdf2_hmac('sha256', plain_password.encode(), salt.encode(), 100000)
+    return password_hash.hex() == stored_hash
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password"""
-    # Truncate password to 72 bytes for bcrypt compatibility
-    if len(password.encode('utf-8')) > 72:
-        password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.hash(password)
+    """Hash a password using PBKDF2"""
+    # Generate a random salt
+    salt = secrets.token_hex(16)
+    # Hash the password
+    password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+    # Return salt:hash format
+    return f"{salt}:{password_hash.hex()}"
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -50,7 +53,7 @@ def verify_token(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
         return payload
-    except JWTError:
+    except Exception:
         return None
 
 
