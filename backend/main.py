@@ -89,11 +89,20 @@ async def app_exception_handler(request: Request, exc: AppException):
 
 # Temporary signup endpoint without database (for testing)
 @app.post("/simple-signup")
-async def simple_signup(email: str, password: str, full_name: str):
+async def simple_signup(request: Request):
     """Temporary signup without database operations to test Railway connectivity"""
     try:
         import jwt
         from datetime import datetime, timedelta
+        
+        # Parse form data
+        form_data = await request.form()
+        email = form_data.get("email")
+        password = form_data.get("password") 
+        full_name = form_data.get("full_name")
+        
+        if not email or not password or not full_name:
+            return {"status": "error", "message": "Missing required fields"}
         
         # Create a test token for frontend testing
         expire = datetime.utcnow() + timedelta(hours=24)
