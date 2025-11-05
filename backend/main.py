@@ -9,7 +9,9 @@ from loguru import logger
 
 from config.settings import get_settings
 from config.database import engine, Base
-from api.routes import leads, outreach, members, analytics, stripe_webhook, auth
+from api.routes import leads, outreach, members, analytics, stripe_webhook
+# Temporarily disable auth import to fix Railway startup
+# from api.routes import auth
 from utils.exceptions import AppException
 
 # Import all models to ensure they are registered with SQLAlchemy
@@ -194,7 +196,8 @@ async def health_check():
 
 
 # Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+# Temporarily disable auth router to fix Railway startup
+# app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(leads.router, prefix="/api/leads", tags=["Leads"])
 app.include_router(outreach.router, prefix="/api/outreach", tags=["Outreach"])
 app.include_router(members.router, prefix="/api/members", tags=["Members"])
