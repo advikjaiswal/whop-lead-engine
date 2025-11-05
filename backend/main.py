@@ -87,14 +87,11 @@ async def app_exception_handler(request: Request, exc: AppException):
         content={"error": exc.message, "detail": exc.detail}
     )
 
-# Temporary signup endpoint without database (for testing)
+# Minimal test signup endpoint
 @app.post("/simple-signup")
 async def simple_signup(request: Request):
-    """Temporary signup without database operations to test Railway connectivity"""
+    """Minimal signup endpoint for testing Railway connectivity"""
     try:
-        import jwt
-        from datetime import datetime, timedelta
-        
         # Parse form data
         form_data = await request.form()
         email = form_data.get("email")
@@ -104,16 +101,12 @@ async def simple_signup(request: Request):
         if not email or not password or not full_name:
             return {"status": "error", "message": "Missing required fields"}
         
-        # Create a test token for frontend testing
-        expire = datetime.utcnow() + timedelta(hours=24)
-        token_data = {"sub": "test_user", "email": email, "exp": expire}
-        access_token = jwt.encode(token_data, settings.JWT_SECRET, algorithm="HS256")
-        
         logger.info(f"Test signup for: {email}")
         
+        # Return a simple success response with mock token
         return {
             "status": "success",
-            "access_token": access_token,
+            "access_token": "test_token_123",
             "token_type": "bearer",
             "user": {
                 "id": "test_user",
