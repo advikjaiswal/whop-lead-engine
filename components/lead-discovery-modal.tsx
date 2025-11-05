@@ -79,21 +79,59 @@ export function LeadDiscoveryModal({ isOpen, onClose, onLeadsDiscovered }: LeadD
 
   const handleNicheSelect = async (niche: string) => {
     setSelectedNiche(niche)
-    setLoading(true)
-
-    try {
-      const response = await leadsAPI.getCriteriaTemplate(niche)
-      if (response.success && response.data) {
-        setTemplate(response.data.template)
-        setKeywords(response.data.template.keywords || [])
-        setSubreddits(response.data.template.subreddits || [])
+    
+    // Set default keywords and subreddits based on niche
+    const nicheTemplates = {
+      'trading': {
+        keywords: ['trading', 'stocks', 'investment', 'portfolio', 'finance'],
+        subreddits: ['investing', 'trading', 'stocks', 'financialindependence', 'SecurityAnalysis']
+      },
+      'saas': {
+        keywords: ['SaaS', 'software', 'startup', 'business', 'tool'],
+        subreddits: ['entrepreneur', 'startups', 'SaaS', 'business', 'smallbusiness']
+      },
+      'fitness': {
+        keywords: ['fitness', 'gym', 'workout', 'health', 'exercise'],
+        subreddits: ['fitness', 'bodybuilding', 'loseit', 'gainit', 'xxfitness']
+      },
+      'marketing': {
+        keywords: ['marketing', 'advertising', 'social media', 'SEO', 'growth'],
+        subreddits: ['marketing', 'entrepreneur', 'digital_marketing', 'SEO', 'socialmedia']
+      },
+      'ecommerce': {
+        keywords: ['ecommerce', 'online store', 'shopify', 'amazon', 'dropshipping'],
+        subreddits: ['ecommerce', 'entrepreneur', 'shopify', 'amazon', 'dropship']
+      },
+      'coaching': {
+        keywords: ['coaching', 'consulting', 'mentor', 'advice', 'help'],
+        subreddits: ['entrepreneur', 'coaching', 'consulting', 'careeradvice', 'GetMotivated']
+      },
+      'crypto': {
+        keywords: ['crypto', 'cryptocurrency', 'bitcoin', 'ethereum', 'blockchain'],
+        subreddits: ['cryptocurrency', 'bitcoin', 'ethereum', 'CryptoMarkets', 'defi']
+      },
+      'gaming': {
+        keywords: ['gaming', 'game development', 'indie games', 'streaming'],
+        subreddits: ['gaming', 'gamedev', 'indiegaming', 'pcgaming', 'NintendoSwitch']
+      },
+      'education': {
+        keywords: ['education', 'learning', 'course', 'teaching', 'school'],
+        subreddits: ['education', 'teachers', 'college', 'studytips', 'getmotivated']
+      },
+      'real-estate': {
+        keywords: ['real estate', 'property', 'investment', 'rental', 'house'],
+        subreddits: ['realestate', 'realestateinvesting', 'landlord', 'firsttimehomebuyer', 'investing']
       }
-    } catch (error) {
-      console.error('Failed to load template:', error)
-      toast.error('Failed to load niche template')
-    } finally {
-      setLoading(false)
     }
+
+    const template = nicheTemplates[niche as keyof typeof nicheTemplates] || {
+      keywords: ['business', 'entrepreneur', 'startup'],
+      subreddits: ['entrepreneur', 'business', 'startups']
+    }
+
+    setKeywords(template.keywords)
+    setSubreddits(template.subreddits)
+    setTemplate({ keywords: template.keywords, subreddits: template.subreddits })
   }
 
   const addKeyword = () => {
@@ -138,8 +176,29 @@ export function LeadDiscoveryModal({ isOpen, onClose, onLeadsDiscovered }: LeadD
       const response = await leadsAPI.discoverLeads(criteria)
       
       if (response.success && response.data) {
-        setDiscoveredLeads(response.data)
-        toast.success(`Discovered ${response.data.length} new leads!`)
+        // Transform API response to Lead objects
+        const transformedLeads = response.data.map((apiLead: any, index: number) => ({
+          id: apiLead.id?.toString() || `discovered-${Date.now()}-${index}`,
+          name: apiLead.author || 'Unknown User',
+          email: undefined,
+          username: apiLead.author,
+          source: 'reddit' as const,
+          content: apiLead.content || apiLead.title || '',
+          url: apiLead.source_url,
+          intentScore: apiLead.quality_score || 0,
+          qualityGrade: (apiLead.quality_score >= 0.7 ? 'A' : 
+                        apiLead.quality_score >= 0.5 ? 'B' : 
+                        apiLead.quality_score >= 0.3 ? 'C' : 'D') as 'A' | 'B' | 'C' | 'D',
+          status: 'new' as const,
+          interests: keywords,
+          painPoints: [],
+          summary: apiLead.title || apiLead.content?.slice(0, 150) + '...',
+          createdAt: new Date(apiLead.discovered_at || Date.now()),
+          updatedAt: new Date(apiLead.discovered_at || Date.now())
+        }))
+        
+        setDiscoveredLeads(transformedLeads)
+        toast.success(`Discovered ${transformedLeads.length} new leads!`)
         setStep(4)
       } else {
         throw new Error(response.error || 'Failed to discover leads')
