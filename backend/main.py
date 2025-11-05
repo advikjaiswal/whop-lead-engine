@@ -5,7 +5,6 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Boolean, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-import jwt
 from datetime import datetime, timedelta
 import os
 import httpx
@@ -15,6 +14,9 @@ import re
 import time
 import hashlib
 import secrets
+import uuid
+import json
+import base64
 
 # Database setup
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./whop_lead_engine.db")
@@ -144,22 +146,52 @@ def get_password_hash(password):
     return f"{salt.hex()}:{password_hash.hex()}"
 
 def create_access_token(data: dict):
-    to_encode = data.copy()
+    """Create a secure token without JWT dependency"""
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    token_data = {
+        "sub": data.get("sub"),
+        "exp": expire.timestamp(),
+        "iat": datetime.utcnow().timestamp(),
+        "jti": str(uuid.uuid4())
+    }
+    
+    # Create HMAC signature
+    token_json = json.dumps(token_data, sort_keys=True)
+    token_b64 = base64.urlsafe_b64encode(token_json.encode()).decode()
+    
+    signature = hashlib.new('sha256', SECRET_KEY.encode() + token_b64.encode()).hexdigest()
+    
+    return f"{token_b64}.{signature}"
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        token = credentials.credentials
+        if '.' not in token:
+            raise HTTPException(status_code=401, detail="Invalid token format")
+        
+        token_b64, signature = token.split('.', 1)
+        
+        # Verify signature
+        expected_sig = hashlib.new('sha256', SECRET_KEY.encode() + token_b64.encode()).hexdigest()
+        if not secrets.compare_digest(signature, expected_sig):
+            raise HTTPException(status_code=401, detail="Invalid token signature")
+        
+        # Decode token data
+        token_json = base64.urlsafe_b64decode(token_b64.encode()).decode()
+        token_data = json.loads(token_json)
+        
+        # Check expiration
+        if datetime.utcnow().timestamp() > token_data.get("exp", 0):
+            raise HTTPException(status_code=401, detail="Token expired")
+        
+        user_id = token_data.get("sub")
+        if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
-    except jwt.PyJWTError:
+            
+    except (ValueError, json.JSONDecodeError, KeyError):
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == int(user_id)).first()
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     return user
