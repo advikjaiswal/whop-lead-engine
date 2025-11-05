@@ -82,17 +82,18 @@ export const authAPI = {
     fullName: string
     whopCommunityName?: string
   }) {
-    // Transform frontend camelCase to backend snake_case
-    const backendData = {
-      email: data.email,
-      password: data.password,
-      full_name: data.fullName,
-      whop_community_name: data.whopCommunityName
-    }
+    // Use simple-signup endpoint with form data
+    const formData = new URLSearchParams()
+    formData.append('email', data.email)
+    formData.append('password', data.password)
+    formData.append('full_name', data.fullName)
     
-    return apiRequest<{ access_token: string; user: any }>('/api/auth/signup', {
+    return apiRequest<{ access_token: string; user: any }>('/simple-signup', {
       method: 'POST',
-      body: JSON.stringify(backendData)
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString()
     })
   },
   

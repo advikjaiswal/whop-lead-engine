@@ -87,60 +87,31 @@ async def app_exception_handler(request: Request, exc: AppException):
         content={"error": exc.message, "detail": exc.detail}
     )
 
-# Simple working signup endpoint
+# Temporary signup endpoint without database (for testing)
 @app.post("/simple-signup")
 async def simple_signup(email: str, password: str, full_name: str):
-    """Simple signup without complex dependencies"""
+    """Temporary signup without database operations to test Railway connectivity"""
     try:
-        import hashlib
-        import secrets
         import jwt
         from datetime import datetime, timedelta
-        from config.database import SessionLocal
         
-        # Simple password hashing
-        salt = secrets.token_hex(16)
-        password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
-        hashed_password = f"{salt}:{password_hash.hex()}"
+        # Create a test token for frontend testing
+        expire = datetime.utcnow() + timedelta(hours=24)
+        token_data = {"sub": "test_user", "email": email, "exp": expire}
+        access_token = jwt.encode(token_data, settings.JWT_SECRET, algorithm="HS256")
         
-        # Create user in database
-        db = SessionLocal()
-        try:
-            # Check if user exists
-            existing_user = db.query(User).filter(User.email == email).first()
-            if existing_user:
-                return {"status": "error", "message": "User already exists"}
-            
-            # Create new user
-            user = User(
-                email=email,
-                hashed_password=hashed_password,
-                full_name=full_name,
-                is_active=True,
-                is_verified=False
-            )
-            
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            
-            # Create token
-            expire = datetime.utcnow() + timedelta(hours=24)
-            token_data = {"sub": str(user.id), "exp": expire}
-            access_token = jwt.encode(token_data, settings.JWT_SECRET, algorithm="HS256")
-            
-            return {
-                "status": "success",
-                "access_token": access_token,
-                "token_type": "bearer",
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "full_name": user.full_name
-                }
+        logger.info(f"Test signup for: {email}")
+        
+        return {
+            "status": "success",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": "test_user",
+                "email": email,
+                "full_name": full_name
             }
-        finally:
-            db.close()
+        }
             
     except Exception as e:
         logger.error(f"Simple signup failed: {e}")
