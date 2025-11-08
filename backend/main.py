@@ -18,10 +18,23 @@ import uuid
 import json
 import base64
 
-# Database setup - PostgreSQL for Railway production, SQLite for local
+# Database setup - Use SQLite for reliable deployment, PostgreSQL if explicitly configured
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./whop_lead_engine.db")
+
+# Only use PostgreSQL if we have a working connection, otherwise fall back to SQLite
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    try:
+        # Test PostgreSQL connection
+        test_engine = create_engine(DATABASE_URL, connect_args={"connect_timeout": 5})
+        test_engine.connect().close()
+        print("PostgreSQL connection successful")
+    except Exception as e:
+        print(f"PostgreSQL connection failed: {e}")
+        print("Falling back to SQLite for reliable deployment")
+        DATABASE_URL = "sqlite:///./whop_lead_engine.db"
+
+print(f"Using database: {DATABASE_URL}")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -380,10 +393,23 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    # Test database connection
+    try:
+        db = SessionLocal()
+        # Simple query to test connection
+        db.execute("SELECT 1")
+        db.close()
+        db_status = "connected"
+        db_type = "sqlite" if "sqlite" in str(engine.url) else "postgresql"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+        db_type = "unknown"
+    
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "database": "connected",
+        "database": db_status,
+        "database_type": db_type,
         "version": "1.0.0"
     }
 
