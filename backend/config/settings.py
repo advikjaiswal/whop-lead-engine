@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     
     # Application Settings
     ENVIRONMENT: str = "production"
-    FRONTEND_URL: str = "https://whop-lead-ev0iplbe5-adviks-projects-3874d3e7.vercel.app"
+    FRONTEND_URL: str = "https://whop-lead-2zcrybg6y-adviks-projects-3874d3e7.vercel.app"
     BACKEND_URL: str = "https://whop-lead-engine-production.up.railway.app"
     PLATFORM_REVENUE_SHARE: float = 0.15
     
@@ -59,6 +59,7 @@ class Settings(BaseSettings):
         "https://whop-lead-engine-production.up.railway.app",
         "https://whop-lead-oeh3dhbj6-adviks-projects-3874d3e7.vercel.app",
         "https://whop-lead-ev0iplbe5-adviks-projects-3874d3e7.vercel.app",
+        "https://whop-lead-2zcrybg6y-adviks-projects-3874d3e7.vercel.app",
         "https://*.vercel.app"
     ]
     
