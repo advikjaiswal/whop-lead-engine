@@ -22,7 +22,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
     salt, stored_hash = hashed_password.split(':', 1)
     # Hash the plain password with the same salt
-    password_hash = hashlib.pbkdf2_hmac('sha256', plain_password.encode(), salt.encode(), 10000)
+    password_hash = hashlib.pbkdf2_hmac('sha256', plain_password.encode(), salt.encode(), 1000)
     return password_hash.hex() == stored_hash
 
 
@@ -31,7 +31,7 @@ def get_password_hash(password: str) -> str:
     # Generate a random salt
     salt = secrets.token_hex(16)
     # Hash the password
-    password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 10000)
+    password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 1000)
     # Return salt:hash format
     return f"{salt}:{password_hash.hex()}"
 

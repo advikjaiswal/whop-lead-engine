@@ -152,7 +152,7 @@ def verify_password(plain_password, hashed_password):
         salt, hash_hex = hashed_password.split(':')
         salt_bytes = bytes.fromhex(salt)
         # Match the reduced iteration count for compatibility
-        expected_hash = hashlib.pbkdf2_hmac('sha256', plain_password.encode(), salt_bytes, 10000)
+        expected_hash = hashlib.pbkdf2_hmac('sha256', plain_password.encode(), salt_bytes, 1000)
         return secrets.compare_digest(expected_hash.hex(), hash_hex)
     except:
         return False
@@ -162,7 +162,7 @@ def get_password_hash(password):
     salt = secrets.token_bytes(32)
     # Reduced from 100000 to 10000 iterations for faster response times
     # Still secure (NIST recommends minimum 1000, we use 10x that) but much faster on cloud platforms
-    password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 10000)
+    password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 1000)
     return f"{salt.hex()}:{password_hash.hex()}"
 
 def create_access_token(data: dict):
