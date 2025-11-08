@@ -35,6 +35,7 @@ if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = "sqlite:///./whop_lead_engine.db"
 
 print(f"Using database: {DATABASE_URL}")
+print(f"Environment DATABASE_URL: {os.getenv('DATABASE_URL', 'NOT_SET')}")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
