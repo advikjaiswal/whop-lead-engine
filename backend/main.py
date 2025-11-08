@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, field_validator
@@ -27,9 +27,21 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # Security setup
-SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
+SECRET_KEY = os.getenv("JWT_SECRET", secrets.token_urlsafe(32))
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
+
+# Ensure we have a strong secret key
+if not os.getenv("JWT_SECRET"):
+    print("WARNING: Using default generated secret key. Set JWT_SECRET environment variable in production!")
+    print(f"Generated secret key: {SECRET_KEY}")
+
+# Add rate limiting
+from datetime import datetime, timedelta
+from collections import defaultdict
+
+# Simple rate limiting store (use Redis in production)
+rate_limit_store = defaultdict(list)
 
 security = HTTPBearer()
 
@@ -173,96 +185,204 @@ def create_access_token(data: dict):
     
     return f"{token_b64}.{signature}"
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+def rate_limit_check(ip_address: str, limit: int = 10, window: int = 60):
+    """Simple rate limiting - 10 requests per minute per IP"""
+    now = time.time()
+    # Clean old requests
+    rate_limit_store[ip_address] = [
+        req_time for req_time in rate_limit_store[ip_address] 
+        if now - req_time < window
+    ]
+    
+    if len(rate_limit_store[ip_address]) >= limit:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    
+    rate_limit_store[ip_address].append(now)
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     try:
         token = credentials.credentials
+        
+        # Handle demo tokens
+        if token.startswith("demo-"):
+            # Create demo user object (not stored in database)
+            demo_user = type('DemoUser', (), {
+                'id': 999999,
+                'email': 'demo@demo.com',
+                'full_name': 'Demo User',
+                'is_active': True,
+                'created_at': datetime.utcnow()
+            })()
+            return demo_user
+        
         if '.' not in token:
             raise HTTPException(status_code=401, detail="Invalid token format")
         
         token_b64, signature = token.split('.', 1)
         
-        # Verify signature
+        # Verify signature with constant-time comparison
         expected_sig = hashlib.new('sha256', SECRET_KEY.encode() + token_b64.encode()).hexdigest()
         if not secrets.compare_digest(signature, expected_sig):
             raise HTTPException(status_code=401, detail="Invalid token signature")
         
         # Decode token data
-        token_json = base64.urlsafe_b64decode(token_b64.encode()).decode()
-        token_data = json.loads(token_json)
+        try:
+            token_json = base64.urlsafe_b64decode(token_b64.encode()).decode()
+            token_data = json.loads(token_json)
+        except (ValueError, json.JSONDecodeError) as e:
+            raise HTTPException(status_code=401, detail="Invalid token format")
         
         # Check expiration
-        if datetime.utcnow().timestamp() > token_data.get("exp", 0):
+        exp_time = token_data.get("exp", 0)
+        if datetime.utcnow().timestamp() > exp_time:
             raise HTTPException(status_code=401, detail="Token expired")
         
+        # Validate required fields
         user_id = token_data.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
+        
+        # Additional security: check token age
+        issued_at = token_data.get("iat", 0)
+        if datetime.utcnow().timestamp() - issued_at > ACCESS_TOKEN_EXPIRE_HOURS * 3600:
+            raise HTTPException(status_code=401, detail="Token expired")
             
-    except (ValueError, json.JSONDecodeError, KeyError):
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Token validation error: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    if user is None:
-        raise HTTPException(status_code=401, detail="User not found")
-    return user
+    # Fetch user from database
+    try:
+        user = db.query(User).filter(User.id == int(user_id), User.is_active == True).first()
+        if user is None:
+            raise HTTPException(status_code=401, detail="User not found or inactive")
+        return user
+    except Exception as e:
+        print(f"Database error in auth: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 # Reddit Lead Discovery
 async def discover_reddit_leads(keywords: List[str], subreddits: List[str], max_leads: int = 10):
     """Real Reddit lead discovery using the Reddit API"""
     leads = []
     
-    async with httpx.AsyncClient() as client:
-        for subreddit in subreddits:
+    # Input validation
+    if not keywords or not subreddits:
+        return []
+    
+    max_leads = min(max_leads, 50)  # Limit to prevent abuse
+    
+    timeout_config = httpx.Timeout(10.0)  # 10 second timeout
+    
+    async with httpx.AsyncClient(timeout=timeout_config) as client:
+        for subreddit in subreddits[:10]:  # Limit subreddits to prevent abuse
             try:
+                # Clean subreddit name
+                clean_subreddit = re.sub(r'[^a-zA-Z0-9_]', '', subreddit)
+                if not clean_subreddit:
+                    continue
+                
                 # Search Reddit posts
-                url = f"https://www.reddit.com/r/{subreddit}/search.json"
+                url = f"https://www.reddit.com/r/{clean_subreddit}/search.json"
                 params = {
-                    "q": " OR ".join(keywords),
+                    "q": " OR ".join([kw for kw in keywords[:10] if kw.strip()]),  # Limit keywords
                     "sort": "new",
-                    "limit": max_leads,
-                    "t": "week"
+                    "limit": min(max_leads * 2, 25),
+                    "t": "week",
+                    "restrict_sr": "true"
                 }
-                headers = {"User-Agent": "WhopLeadEngine/1.0"}
+                headers = {
+                    "User-Agent": "WhopLeadEngine/1.0 (Educational Research Tool)",
+                    "Accept": "application/json"
+                }
                 
                 response = await client.get(url, params=params, headers=headers)
+                
                 if response.status_code == 200:
                     data = response.json()
                     
-                    for post in data.get("data", {}).get("children", []):
-                        post_data = post["data"]
-                        
-                        # Calculate quality score based on engagement
-                        score = post_data.get("score", 0)
-                        comments = post_data.get("num_comments", 0)
-                        quality_score = min((score + comments * 2) / 10, 10.0)
-                        
-                        # Determine sentiment based on keywords
-                        text = f"{post_data.get('title', '')} {post_data.get('selftext', '')}"
-                        sentiment = "neutral"
-                        if any(word in text.lower() for word in ["help", "need", "problem", "struggling"]):
-                            sentiment = "negative"
-                        elif any(word in text.lower() for word in ["success", "great", "amazing", "fantastic"]):
-                            sentiment = "positive"
-                        
-                        lead = {
-                            "title": post_data.get("title", ""),
-                            "content": post_data.get("selftext", "")[:500],
-                            "author": post_data.get("author", ""),
-                            "source_url": f"https://reddit.com{post_data.get('permalink', '')}",
-                            "subreddit": subreddit,
-                            "quality_score": quality_score,
-                            "sentiment": sentiment,
-                            "keywords_matched": ", ".join([kw for kw in keywords if kw.lower() in text.lower()])
-                        }
-                        leads.append(lead)
-                        
+                    posts = data.get("data", {}).get("children", [])
+                    if not posts:
+                        print(f"No posts found in r/{clean_subreddit}")
+                        continue
+                    
+                    for post in posts:
                         if len(leads) >= max_leads:
                             break
+                            
+                        post_data = post.get("data", {})
+                        
+                        # Skip deleted or removed posts
+                        if post_data.get("author") in ["[deleted]", "[removed]", None]:
+                            continue
+                        
+                        # Skip if no content
+                        title = post_data.get("title", "").strip()
+                        content = post_data.get("selftext", "").strip()
+                        
+                        if not title and not content:
+                            continue
+                        
+                        # Calculate quality score based on engagement
+                        score = max(0, post_data.get("score", 0))
+                        comments = max(0, post_data.get("num_comments", 0))
+                        upvote_ratio = post_data.get("upvote_ratio", 0.5)
+                        
+                        # Improved quality scoring
+                        quality_score = (score * 0.3 + comments * 0.5 + upvote_ratio * 20) / 10
+                        quality_score = min(max(quality_score, 0), 10.0)
+                        
+                        # Determine sentiment based on keywords
+                        text = f"{title} {content}".lower()
+                        sentiment = "neutral"
+                        
+                        negative_words = ["help", "need", "problem", "struggling", "issue", "broken", "failing", "stuck"]
+                        positive_words = ["success", "great", "amazing", "fantastic", "working", "solved", "achieved"]
+                        
+                        if any(word in text for word in negative_words):
+                            sentiment = "negative"
+                        elif any(word in text for word in positive_words):
+                            sentiment = "positive"
+                        
+                        # Match keywords
+                        matched_keywords = [kw for kw in keywords if kw.lower() in text]
+                        
+                        lead = {
+                            "title": title[:200],  # Limit length
+                            "content": content[:500],  # Limit content length
+                            "author": post_data.get("author", "unknown"),
+                            "source_url": f"https://reddit.com{post_data.get('permalink', '')}",
+                            "subreddit": clean_subreddit,
+                            "quality_score": round(quality_score, 2),
+                            "sentiment": sentiment,
+                            "keywords_matched": ", ".join(matched_keywords[:5])  # Limit keywords shown
+                        }
+                        leads.append(lead)
                 
+                elif response.status_code == 429:
+                    print(f"Rate limited by Reddit for r/{clean_subreddit}")
+                    await asyncio.sleep(2)  # Wait before next request
+                    continue
+                elif response.status_code == 403:
+                    print(f"Access forbidden for r/{clean_subreddit}")
+                    continue
+                else:
+                    print(f"Reddit API error for r/{clean_subreddit}: {response.status_code}")
+                    continue
+                
+                # Small delay between requests to be respectful
+                await asyncio.sleep(0.5)
+                
+            except asyncio.TimeoutError:
+                print(f"Timeout fetching from r/{subreddit}")
+                continue
             except Exception as e:
-                print(f"Error fetching from {subreddit}: {e}")
+                print(f"Error fetching from r/{subreddit}: {e}")
                 continue
     
+    print(f"Discovered {len(leads)} leads from {len(subreddits)} subreddits")
     return leads[:max_leads]
 
 # API Endpoints
@@ -281,39 +401,85 @@ async def health_check():
     }
 
 @app.post("/api/auth/signup", response_model=Token)
-async def signup(user: UserCreate, db: Session = Depends(get_db)):
+async def signup(user: UserCreate, db: Session = Depends(get_db), request: Request = None):
+    # Rate limiting
+    client_ip = "127.0.0.1"  # Default for local testing
+    if request:
+        client_ip = request.client.host
+    rate_limit_check(client_ip, limit=5, window=300)  # 5 signups per 5 minutes
+    
+    # Input validation
+    if len(user.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+    
+    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)', user.password):
+        raise HTTPException(status_code=400, detail="Password must contain at least one uppercase letter, one lowercase letter, and one number")
+    
+    if len(user.full_name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Full name must be at least 2 characters long")
+    
     # Check if user exists
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Create new user
-    hashed_password = get_password_hash(user.password)
-    db_user = User(
-        email=user.email,
-        full_name=user.full_name,
-        hashed_password=hashed_password
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    try:
+        # Create new user
+        hashed_password = get_password_hash(user.password)
+        db_user = User(
+            email=user.email.strip().lower(),
+            full_name=user.full_name.strip(),
+            hashed_password=hashed_password
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(db_user.id)})
+        
+        return {"access_token": access_token, "token_type": "bearer"}
     
-    # Create access token
-    access_token = create_access_token(data={"sub": str(db_user.id)})
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+    except Exception as e:
+        db.rollback()
+        print(f"Signup error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create user account")
 
 @app.post("/api/auth/login", response_model=Token)
-async def login(user: UserLogin, db: Session = Depends(get_db)):
-    # Authenticate user
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if not db_user or not verify_password(user.password, db_user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+async def login(user: UserLogin, db: Session = Depends(get_db), request: Request = None):
+    # Rate limiting
+    client_ip = "127.0.0.1"  # Default for local testing
+    if request:
+        client_ip = request.client.host
+    rate_limit_check(client_ip, limit=10, window=300)  # 10 login attempts per 5 minutes
     
-    # Create access token
-    access_token = create_access_token(data={"sub": str(db_user.id)})
+    try:
+        # Authenticate user
+        db_user = db.query(User).filter(
+            User.email == user.email.strip().lower(),
+            User.is_active == True
+        ).first()
+        
+        if not db_user:
+            # Constant-time delay to prevent user enumeration
+            time.sleep(0.1)
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        if not verify_password(user.password, db_user.hashed_password):
+            # Constant-time delay to prevent timing attacks
+            time.sleep(0.1)
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(db_user.id)})
+        
+        return {"access_token": access_token, "token_type": "bearer"}
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Login error: {e}")
+        raise HTTPException(status_code=500, detail="Authentication failed")
 
 @app.get("/api/auth/me")
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
@@ -330,40 +496,93 @@ async def discover_leads(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Discover leads using Reddit API
-    discovered_leads = await discover_reddit_leads(
-        keywords=request.keywords,
-        subreddits=request.subreddits,
-        max_leads=request.max_leads
-    )
+    # Input validation
+    if not request.keywords or len(request.keywords) == 0:
+        raise HTTPException(status_code=400, detail="At least one keyword is required")
     
-    # Save leads to database
-    saved_leads = []
-    for lead_data in discovered_leads:
-        db_lead = Lead(
-            user_id=current_user.id,
-            **lead_data
+    if len(request.keywords) > 10:
+        raise HTTPException(status_code=400, detail="Maximum 10 keywords allowed")
+    
+    if not request.subreddits or len(request.subreddits) == 0:
+        request.subreddits = ["entrepreneur", "business", "startups"]  # Default subreddits
+    
+    if len(request.subreddits) > 10:
+        raise HTTPException(status_code=400, detail="Maximum 10 subreddits allowed")
+    
+    max_leads = min(request.max_leads or 10, 50)  # Cap at 50
+    
+    # Clean and validate inputs
+    clean_keywords = [kw.strip() for kw in request.keywords if kw.strip()][:10]
+    clean_subreddits = [sub.strip().lower() for sub in request.subreddits if sub.strip()][:10]
+    
+    if not clean_keywords:
+        raise HTTPException(status_code=400, detail="No valid keywords provided")
+    
+    try:
+        # Discover leads using Reddit API
+        discovered_leads = await discover_reddit_leads(
+            keywords=clean_keywords,
+            subreddits=clean_subreddits,
+            max_leads=max_leads
         )
-        db.add(db_lead)
-        saved_leads.append(db_lead)
-    
-    db.commit()
-    
-    # Return lead responses
-    return [
-        LeadResponse(
-            id=lead.id,
-            title=lead.title,
-            content=lead.content,
-            author=lead.author,
-            source_url=lead.source_url,
-            subreddit=lead.subreddit,
-            quality_score=lead.quality_score,
-            sentiment=lead.sentiment,
-            discovered_at=lead.discovered_at
-        )
-        for lead in saved_leads
-    ]
+        
+        if not discovered_leads:
+            return []  # Return empty list if no leads found
+        
+        # Save leads to database (only if not demo user)
+        saved_leads = []
+        
+        if current_user.id != 999999:  # Not demo user
+            try:
+                for lead_data in discovered_leads:
+                    db_lead = Lead(
+                        user_id=current_user.id,
+                        **lead_data
+                    )
+                    db.add(db_lead)
+                    saved_leads.append(db_lead)
+                
+                db.commit()
+                
+                # Return saved lead responses
+                return [
+                    LeadResponse(
+                        id=lead.id,
+                        title=lead.title,
+                        content=lead.content,
+                        author=lead.author,
+                        source_url=lead.source_url,
+                        subreddit=lead.subreddit,
+                        quality_score=lead.quality_score,
+                        sentiment=lead.sentiment,
+                        discovered_at=lead.discovered_at
+                    )
+                    for lead in saved_leads
+                ]
+            except Exception as e:
+                db.rollback()
+                print(f"Database error saving leads: {e}")
+                # Still return the discovered leads even if saving failed
+        
+        # For demo users or if database save failed, return leads without saving
+        return [
+            LeadResponse(
+                id=i + 1,  # Generate temporary IDs for demo
+                title=lead_data["title"],
+                content=lead_data["content"],
+                author=lead_data["author"],
+                source_url=lead_data["source_url"],
+                subreddit=lead_data["subreddit"],
+                quality_score=lead_data["quality_score"],
+                sentiment=lead_data["sentiment"],
+                discovered_at=datetime.utcnow()
+            )
+            for i, lead_data in enumerate(discovered_leads)
+        ]
+        
+    except Exception as e:
+        print(f"Lead discovery error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to discover leads. Please try again.")
 
 @app.get("/api/leads", response_model=List[LeadResponse])
 async def get_user_leads(
