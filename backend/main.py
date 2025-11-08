@@ -36,12 +36,7 @@ if not os.getenv("JWT_SECRET"):
     print("WARNING: Using default generated secret key. Set JWT_SECRET environment variable in production!")
     print(f"Generated secret key: {SECRET_KEY}")
 
-# Add rate limiting
-from datetime import datetime, timedelta
-from collections import defaultdict
-
-# Simple rate limiting store (use Redis in production)
-rate_limit_store = defaultdict(list)
+# Removed rate limiting imports to fix timeout issues
 
 security = HTTPBearer()
 
@@ -188,19 +183,8 @@ def create_access_token(data: dict):
     
     return f"{token_b64}.{signature}"
 
-def rate_limit_check(ip_address: str, limit: int = 10, window: int = 60):
-    """Simple rate limiting - 10 requests per minute per IP"""
-    now = time.time()
-    # Clean old requests
-    rate_limit_store[ip_address] = [
-        req_time for req_time in rate_limit_store[ip_address] 
-        if now - req_time < window
-    ]
-    
-    if len(rate_limit_store[ip_address]) >= limit:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
-    
-    rate_limit_store[ip_address].append(now)
+# Rate limiting removed temporarily to fix timeout issues
+# TODO: Re-implement with better async-compatible solution
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     try:
@@ -404,12 +388,8 @@ async def health_check():
     }
 
 @app.post("/api/auth/signup", response_model=Token)
-async def signup(user: UserCreate, db: Session = Depends(get_db), request: Request = None):
-    # Rate limiting
-    client_ip = "127.0.0.1"  # Default for local testing
-    if request:
-        client_ip = request.client.host
-    rate_limit_check(client_ip, limit=5, window=300)  # 5 signups per 5 minutes
+async def signup(user: UserCreate, db: Session = Depends(get_db)):
+    # Removed rate limiting temporarily to fix timeout issues
     
     # Input validation
     if len(user.password) < 8:
@@ -449,12 +429,8 @@ async def signup(user: UserCreate, db: Session = Depends(get_db), request: Reque
         raise HTTPException(status_code=500, detail="Failed to create user account")
 
 @app.post("/api/auth/login", response_model=Token)
-async def login(user: UserLogin, db: Session = Depends(get_db), request: Request = None):
-    # Rate limiting
-    client_ip = "127.0.0.1"  # Default for local testing
-    if request:
-        client_ip = request.client.host
-    rate_limit_check(client_ip, limit=10, window=300)  # 10 login attempts per 5 minutes
+async def login(user: UserLogin, db: Session = Depends(get_db)):
+    # Removed rate limiting temporarily to fix timeout issues
     
     try:
         # Authenticate user
