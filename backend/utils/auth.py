@@ -7,6 +7,7 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 import hashlib
 import secrets
+import bcrypt
 from config.database import get_db
 from config.settings import get_settings
 from models.user import User
@@ -14,26 +15,20 @@ from models.user import User
 settings = get_settings()
 security = HTTPBearer()
 
-# Simple password hashing using hashlib (no external dependencies)
+# Fast password hashing using bcrypt
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    # Extract salt and hash from stored password
-    if ':' not in hashed_password:
+    try:
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except Exception:
         return False
-    salt, stored_hash = hashed_password.split(':', 1)
-    # Hash the plain password with the same salt
-    password_hash = hashlib.pbkdf2_hmac('sha256', plain_password.encode(), salt.encode(), 1000)
-    return password_hash.hex() == stored_hash
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password using PBKDF2"""
-    # Generate a random salt
-    salt = secrets.token_hex(16)
-    # Hash the password
-    password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 1000)
-    # Return salt:hash format
-    return f"{salt}:{password_hash.hex()}"
+    """Hash a password using bcrypt (much faster than PBKDF2)"""
+    salt = bcrypt.gensalt()
+    password_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return password_hash.decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
