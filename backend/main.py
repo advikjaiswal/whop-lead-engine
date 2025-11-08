@@ -18,22 +18,10 @@ import uuid
 import json
 import base64
 
-# Database setup - Use SQLite for reliable deployment, PostgreSQL if explicitly configured
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./whop_lead_engine.db")
+# Database setup - Force SQLite for reliable Railway deployment
+DATABASE_URL = "sqlite:///./whop_lead_engine.db"
 
-# Only use PostgreSQL if we have a working connection, otherwise fall back to SQLite
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-    try:
-        # Test PostgreSQL connection
-        test_engine = create_engine(DATABASE_URL, connect_args={"connect_timeout": 5})
-        test_engine.connect().close()
-        print("PostgreSQL connection successful")
-    except Exception as e:
-        print(f"PostgreSQL connection failed: {e}")
-        print("Falling back to SQLite for reliable deployment")
-        DATABASE_URL = "sqlite:///./whop_lead_engine.db"
-
+print(f"Forcing SQLite for reliable Railway deployment")
 print(f"Using database: {DATABASE_URL}")
 print(f"Environment DATABASE_URL: {os.getenv('DATABASE_URL', 'NOT_SET')}")
 engine = create_engine(DATABASE_URL)
