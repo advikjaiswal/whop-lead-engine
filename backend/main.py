@@ -19,11 +19,13 @@ import json
 import base64
 
 # Database setup - Force SQLite for reliable Railway deployment
+# Explicitly ignore any DATABASE_URL environment variable to force SQLite
+os.environ.pop('DATABASE_URL', None)  # Remove DATABASE_URL if it exists
 DATABASE_URL = "sqlite:///./whop_lead_engine.db"
 
 print(f"Forcing SQLite for reliable Railway deployment")
 print(f"Using database: {DATABASE_URL}")
-print(f"Environment DATABASE_URL: {os.getenv('DATABASE_URL', 'NOT_SET')}")
+print(f"Environment DATABASE_URL removed/ignored")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
