@@ -54,11 +54,11 @@ Would you be open to a quick chat? If so, what's the best phone number to reach 
 Cheers,
 AJ"""
 
-MAX_DMS_PER_RUN = 1000 # High target, but controlled by rate limits
-DELAY_MIN = 180   # 3 minutes
-DELAY_MAX = 420   # 7 minutes
-COFFEE_BREAK_INTERVAL = 5 # Take a break every 5 DMs
-COFFEE_BREAK_DURATION = 900 # 15 minutes
+MAX_DMS_PER_RUN = 1000 
+DELAY_MIN = 45    # 45 seconds
+DELAY_MAX = 120   # 2 minutes
+COFFEE_BREAK_INTERVAL = 10 # Take a break every 10 DMs
+COFFEE_BREAK_DURATION = 300 # 5 minutes
 TRACKING_FILE = "sent_dms.json"
 TRACKING_FILE = "sent_dms.json"
 
@@ -209,9 +209,8 @@ def main():
                 )
                 
                 # Send DM
-                print(f"📨 [DRY RUN] Sending DM to u/{username} (r/{sub_name})...")
-                print(f"--- Message Preview ---\n{message_body}\n-----------------------")
-                # reddit.redditor(username).message(subject="Quick question about your project", message=message_body)
+                print(f"📨 Sending DM to u/{username} (r/{sub_name})...")
+                reddit.redditor(username).message(subject="Quick question about your project", message=message_body)
                 
                 # Update history
                 sent_history[username] = {
