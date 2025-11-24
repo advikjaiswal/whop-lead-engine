@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_CLIENT_ID: str = ""
     
     # Supabase
     SUPABASE_URL: Optional[str] = None
@@ -48,7 +49,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "production"
     FRONTEND_URL: str = "https://whop-lead-2zcrybg6y-adviks-projects-3874d3e7.vercel.app"
     BACKEND_URL: str = "https://whop-lead-engine-production.up.railway.app"
-    PLATFORM_REVENUE_SHARE: float = 0.15
+    PLATFORM_REVENUE_SHARE: float = 0.25
     
     # CORS - Allow Railway, Vercel and localhost
     CORS_ORIGINS: List[str] = [

@@ -44,15 +44,15 @@ export default function SignupPage() {
 
     try {
       const response = await authAPI.signup(data)
-      
+
       if (response.success && response.data?.access_token) {
         localStorage.setItem("auth_token", response.data.access_token)
         router.push("/dashboard")
       } else {
         setError(response.error || "Signup failed")
       }
-    } catch (err) {
-      setError("An error occurred. Please try again.")
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }

@@ -217,48 +217,64 @@ async def handle_subscription_cancelled(subscription, db: Session):
         logger.info(f"Member {member.id} marked as churned")
 
 
-@router.post("/connect/onboarding")
-async def create_connect_account(
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+@router.get("/connect/oauth")
+async def get_connect_oauth_url(
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Create Stripe Connect account for user"""
+    """Get Stripe Connect OAuth URL"""
+    
+    client_id = settings.STRIPE_CLIENT_ID
+    if not client_id:
+        raise HTTPException(status_code=500, detail="Stripe Client ID not configured")
+        
+    state = f"{current_user.id}_{datetime.utcnow().timestamp()}"
+    
+    params = {
+        "response_type": "code",
+        "client_id": client_id,
+        "scope": "read_write",
+        "state": state,
+        "redirect_uri": f"{settings.FRONTEND_URL}/dashboard/setup/callback",
+    }
+    
+    query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+    url = f"https://connect.stripe.com/oauth/authorize?{query_string}"
+    
+    return {"url": url}
+
+
+@router.post("/connect/callback")
+async def handle_connect_callback(
+    code: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Exchange authorization code for Stripe credentials"""
     
     try:
-        # Create connected account
-        account = stripe.Account.create(
-            type="express",
-            country="US",  # TODO: Make this configurable
-            email=current_user.email,
-            business_type="individual",
-            capabilities={
-                "card_payments": {"requested": True},
-                "transfers": {"requested": True},
-            },
+        response = stripe.OAuth.token(
+            grant_type="authorization_code",
+            code=code,
         )
         
-        # Save account ID
-        current_user.stripe_account_id = account.id
+        # Update user with Stripe credentials
+        current_user.stripe_account_id = response['stripe_user_id']
+        current_user.stripe_access_token = response['access_token']
+        current_user.stripe_refresh_token = response['refresh_token']
+        current_user.stripe_publishable_key = response['stripe_publishable_key']
+        
         db.commit()
         
-        # Create onboarding link
-        account_link = stripe.AccountLink.create(
-            account=account.id,
-            refresh_url=f"{settings.FRONTEND_URL}/settings?stripe_refresh=true",
-            return_url=f"{settings.FRONTEND_URL}/settings?stripe_success=true",
-            type="account_onboarding",
-        )
+        logger.info(f"Stripe Connect successful for user {current_user.id}")
         
-        logger.info(f"Stripe Connect account created for user {current_user.id}: {account.id}")
+        return {"status": "success", "account_id": response['stripe_user_id']}
         
-        return {
-            "account_id": account.id,
-            "onboarding_url": account_link.url
-        }
-        
-    except stripe.error.StripeError as e:
-        logger.error(f"Stripe Connect error for user {current_user.id}: {e}")
+    except stripe.error.OAuthError as e:
+        logger.error(f"Stripe OAuth error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error connecting Stripe account: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/connect/status")
