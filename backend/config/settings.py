@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     # Application Settings
     ENVIRONMENT: str = "production"
     FRONTEND_URL: str = "https://whop-lead-2zcrybg6y-adviks-projects-3874d3e7.vercel.app"
-    BACKEND_URL: str = "https://whop-lead-engine-production.up.railway.app"
+    BACKEND_URL: str = "https://whop-lead-engine.onrender.com"
     PLATFORM_REVENUE_SHARE: float = 0.25
     
     # CORS - Allow Railway, Vercel and localhost

@@ -1,7 +1,7 @@
-import { APIResponse, Lead, Campaign, Member, Analytics, DashboardStats } from '@/types'
+import { APIResponse, Lead, Campaign, Member, MemberStatus, Analytics, DashboardStats, LeadSource, LeadStatus } from '@/types'
 
 // API configuration - use Railway production backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://whop-lead-engine-production.up.railway.app'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://whop-lead-engine.onrender.com'
 
 // Validate API URL
 if (!API_BASE_URL) {
@@ -21,11 +21,11 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<APIResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`
-  
+
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   }
-  
+
   // Add auth token if available (only on client side)
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('auth_token')
@@ -33,7 +33,7 @@ async function apiRequest<T>(
       defaultHeaders['Authorization'] = `Bearer ${token}`
     }
   }
-  
+
   const config: RequestInit = {
     ...options,
     headers: {
@@ -41,15 +41,15 @@ async function apiRequest<T>(
       ...options.headers,
     },
   }
-  
+
   try {
     const response = await fetch(url, config)
     const data = await response.json()
-    
+
     if (!response.ok) {
       throw new APIError(data.error || 'API request failed', response.status)
     }
-    
+
     return {
       success: true,
       data: data.data || data,
@@ -59,7 +59,7 @@ async function apiRequest<T>(
     if (error instanceof APIError) {
       throw error
     }
-    
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -75,7 +75,7 @@ export const authAPI = {
       body: JSON.stringify({ email, password })
     })
   },
-  
+
   async signup(data: {
     email: string
     password: string
@@ -87,27 +87,57 @@ export const authAPI = {
       password: data.password,
       full_name: data.fullName
     }
-    
+
     return apiRequest<{ access_token: string; user: any }>('/api/auth/signup', {
       method: 'POST',
       body: JSON.stringify(requestData)
     })
   },
-  
+
   async logout() {
     localStorage.removeItem('auth_token')
     return { success: true }
   },
-  
+
   async getProfile() {
     return apiRequest<any>('/api/auth/me')
   },
-  
+
   async updateProfile(data: any) {
     return apiRequest<any>('/api/auth/me', {
       method: 'PUT',
       body: JSON.stringify(data)
     })
+  }
+}
+
+// Workspace API
+export const workspaceAPI = {
+  async getWorkspace() {
+    return apiRequest<any>('/api/workspace/')
+  },
+  async createWorkspace(data: any) {
+    return apiRequest<any>('/api/workspace/', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  },
+  async updateWorkspace(data: any) {
+    return apiRequest<any>('/api/workspace/', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  },
+  async validateWorkspaceKeys(data: any) {
+    return apiRequest<any[]>('/api/workspace/validate-keys', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+  async activateWorkspace() {
+    return apiRequest<any>('/api/workspace/activate', {
+      method: 'POST'
+    });
   }
 }
 
@@ -128,31 +158,31 @@ export const leadsAPI = {
         }
       })
     }
-    
+
     const query = params.toString() ? `?${params.toString()}` : ''
     return apiRequest<{ leads: Lead[]; total: number }>(`/api/leads${query}`)
   },
-  
+
   async createLead(data: Partial<Lead>) {
     return apiRequest<Lead>('/api/leads', {
       method: 'POST',
       body: JSON.stringify(data)
     })
   },
-  
-  async updateLead(id: string, data: Partial<Lead>) {
+
+  async updateLead(id: number, data: Partial<Lead>) {
     return apiRequest<Lead>(`/api/leads/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     })
   },
-  
-  async deleteLead(id: string) {
+
+  async deleteLead(id: number) {
     return apiRequest<void>(`/api/leads/${id}`, {
       method: 'DELETE'
     })
   },
-  
+
   async discoverLeads(criteria: {
     niche: string
     keywords: string[]
@@ -164,7 +194,7 @@ export const leadsAPI = {
       body: JSON.stringify(criteria)
     })
   },
-  
+
   async getCriteriaTemplate(niche: string) {
     return apiRequest<{
       niche: string
@@ -178,7 +208,7 @@ export const leadsAPI = {
       method: 'POST'
     })
   },
-  
+
   async analyzeLeads(data: {
     keywords: string[]
     sources: string[]
@@ -189,9 +219,36 @@ export const leadsAPI = {
       body: JSON.stringify(data)
     })
   },
-  
+
   async getAnalysisStatus(jobId: string) {
     return apiRequest<{ status: string; progress: number; results?: Lead[] }>(`/api/leads/analyze/${jobId}`)
+  }
+}
+
+// Messaging API
+export const messagingAPI = {
+  async getMessageFlows() {
+    return apiRequest<any[]>('/api/messaging/');
+  },
+  async getMessageFlow(id: number) {
+    return apiRequest<any>(`/api/messaging/${id}`);
+  },
+  async createMessageFlow(data: any) {
+    return apiRequest<any>('/api/messaging/', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+  async updateMessageFlow(id: number, data: any) {
+    return apiRequest<any>(`/api/messaging/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+  async deleteMessageFlow(id: number) {
+    return apiRequest<void>(`/api/messaging/${id}`, {
+      method: 'DELETE'
+    });
   }
 }
 
@@ -200,28 +257,28 @@ export const campaignsAPI = {
   async getCampaigns() {
     return apiRequest<Campaign[]>('/api/outreach/campaigns')
   },
-  
+
   async createCampaign(data: Partial<Campaign>) {
     return apiRequest<Campaign>('/api/outreach/campaigns', {
       method: 'POST',
       body: JSON.stringify(data)
     })
   },
-  
+
   async updateCampaign(id: string, data: Partial<Campaign>) {
     return apiRequest<Campaign>(`/api/outreach/campaigns/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     })
   },
-  
+
   async sendCampaign(id: string, leadIds: string[]) {
     return apiRequest<{ sent: number }>(`/api/outreach/campaigns/${id}/send`, {
       method: 'POST',
       body: JSON.stringify({ leadIds })
     })
   },
-  
+
   async getCampaignAnalytics(id: string) {
     return apiRequest<any>(`/api/outreach/campaigns/${id}/analytics`)
   }
@@ -243,22 +300,22 @@ export const membersAPI = {
         }
       })
     }
-    
+
     const query = params.toString() ? `?${params.toString()}` : ''
     return apiRequest<{ members: Member[]; total: number }>(`/api/members${query}`)
   },
-  
+
   async syncMembers() {
     return apiRequest<{ synced: number }>('/api/members/sync')
   },
-  
+
   async sendRetentionCampaign(memberIds: string[], message: string) {
     return apiRequest<{ sent: number }>('/api/members/retention', {
       method: 'POST',
       body: JSON.stringify({ memberIds, message })
     })
   },
-  
+
   async getMemberAnalytics() {
     return apiRequest<any>('/api/members/analytics')
   }
@@ -269,17 +326,28 @@ export const analyticsAPI = {
   async getDashboardStats() {
     return apiRequest<DashboardStats>('/api/analytics/dashboard')
   },
-  
+
   async getLeadAnalytics(period: string = '30d') {
     return apiRequest<any>(`/api/analytics/leads?period=${period}`)
   },
-  
+
   async getRevenueAnalytics(period: string = '30d') {
     return apiRequest<any>(`/api/analytics/revenue?period=${period}`)
   },
-  
+
   async getActivityFeed(limit: number = 10) {
     return apiRequest<any>(`/api/analytics/activity?limit=${limit}`)
+  },
+
+  async getRetentionAnalytics() {
+    return apiRequest<any>('/api/analytics/retention')
+  }
+}
+
+// Revenue API
+export const revenueAPI = {
+  async getRevenueData() {
+    return apiRequest<any>('/api/revenue/');
   }
 }
 
