@@ -50,7 +50,7 @@ app.include_router(stripe_webhook.router, prefix="/api/webhooks", tags=["Stripe 
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "deployment_id": "fix-imports-disable-discord"}
 
 if __name__ == "__main__":
     import uvicorn

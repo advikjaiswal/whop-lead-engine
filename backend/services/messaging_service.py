@@ -1,7 +1,7 @@
 from backend.models.lead import Lead, MessageFlow
 from backend.models.workspace import Workspace
 from sqlalchemy.orm import Session
-import discord
+# import discord
 
 async def send_welcome_dm(db: Session, lead: Lead):
     """
@@ -33,11 +33,12 @@ async def send_welcome_dm(db: Session, lead: Lead):
 
     # 3. Send the message via the correct platform
     if workspace.workspace_type == "discord":
-        await send_discord_dm(
-            bot_token=workspace.bot_token,
-            recipient_username=lead.author,
-            message=message_content
-        )
+        # await send_discord_dm(
+        #     bot_token=workspace.bot_token,
+        #     recipient_username=lead.author,
+        #     message=message_content
+        # )
+        print("Discord DM disabled for stability check.")
     else:
         print(f"Workspace type '{workspace.workspace_type}' not yet supported for DMs.")
 
@@ -49,40 +50,41 @@ async def send_discord_dm(bot_token: str, recipient_username: str, message: str)
     share a server with the user to send a DM without a friend request.
     This function assumes the bot can find the user.
     """
-    intents = discord.Intents.default()
-    intents.members = True # Required to find users
-    client = discord.Client(intents=intents)
+    print("Discord DM functionality disabled.")
+    # intents = discord.Intents.default()
+    # intents.members = True # Required to find users
+    # client = discord.Client(intents=intents)
 
-    @client.event
-    async def on_ready():
-        print(f'DM Bot logged in as {client.user}')
-        try:
-            # This is a big assumption: that the bot can find the user by name.
-            # In a real-world scenario, you'd likely need the user's Discord ID.
-            user = discord.utils.find(lambda u: str(u) == recipient_username, client.users)
+    # @client.event
+    # async def on_ready():
+    #     print(f'DM Bot logged in as {client.user}')
+    #     try:
+    #         # This is a big assumption: that the bot can find the user by name.
+    #         # In a real-world scenario, you'd likely need the user's Discord ID.
+    #         user = discord.utils.find(lambda u: str(u) == recipient_username, client.users)
 
-            # A more reliable way is to iterate through guilds the bot is in
-            if not user:
-                for guild in client.guilds:
-                    member = guild.get_member_named(recipient_username)
-                    if member:
-                        user = member
-                        break
+    #         # A more reliable way is to iterate through guilds the bot is in
+    #         if not user:
+    #             for guild in client.guilds:
+    #                 member = guild.get_member_named(recipient_username)
+    #                 if member:
+    #                     user = member
+    #                     break
             
-            if user:
-                print(f"Found user {user}. Sending DM...")
-                await user.send(message)
-                print("DM sent successfully.")
-            else:
-                print(f"Could not find user '{recipient_username}' in any shared servers.")
+    #         if user:
+    #             print(f"Found user {user}. Sending DM...")
+    #             await user.send(message)
+    #             print("DM sent successfully.")
+    #         else:
+    #             print(f"Could not find user '{recipient_username}' in any shared servers.")
 
-        except Exception as e:
-            print(f"Failed to send DM: {e}")
-        finally:
-            await client.close()
+    #     except Exception as e:
+    #         print(f"Failed to send DM: {e}")
+    #     finally:
+    #         await client.close()
 
-    try:
-        await client.start(bot_token)
-    except Exception as e:
-        print(f"Failed to start DM bot: {e}")
+    # try:
+    #     await client.start(bot_token)
+    # except Exception as e:
+    #     print(f"Failed to start DM bot: {e}")
 
