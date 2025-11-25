@@ -52,6 +52,31 @@ app.include_router(stripe_webhook.router, prefix="/api/webhooks", tags=["Stripe 
 async def health_check():
     return {"status": "ok", "deployment_id": "restored-full-app"}
 
-if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# Keep-Alive Mechanism
+import asyncio
+import httpx
+from backend.config.settings import get_settings
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(keep_alive())
+
+async def keep_alive():
+    """
+    Pings the application every 14 minutes to prevent Render from sleeping.
+    """
+    settings = get_settings()
+    url = f"{settings.BACKEND_URL}/health"
+    print(f"Starting keep-alive task for {url}")
+    
+    while True:
+        try:
+            await asyncio.sleep(14 * 60) # 14 minutes
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url)
+                print(f"Keep-alive ping status: {response.status_code}")
+        except Exception as e:
+            print(f"Keep-alive ping failed: {e}")
