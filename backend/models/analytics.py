@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Text, Date
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from config.database import Base
+from backend.database import Base
 
 
 class Analytics(Base):

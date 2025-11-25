@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Foreign
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
-from config.database import Base
+from backend.database import Base
 
 
 class CampaignStatus(enum.Enum):

@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Float, 
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
-from config.database import Base
+from backend.database import Base
 
 
 class MemberStatus(enum.Enum):
