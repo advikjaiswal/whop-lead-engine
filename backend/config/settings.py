@@ -57,6 +57,7 @@ class Settings(BaseSettings):
         "http://localhost:3001",
         "https://*.railway.app",
         "https://*.up.railway.app",
+        "https://*.onrender.com",
         "https://whop-lead-engine-production.up.railway.app",
         "https://whop-lead-oeh3dhbj6-adviks-projects-3874d3e7.vercel.app",
         "https://whop-lead-ev0iplbe5-adviks-projects-3874d3e7.vercel.app",
