@@ -8,7 +8,7 @@ from backend.models import user as user_model, lead as lead_model, workspace as 
 # The MessageFlow model is in lead.py, so this is sufficient
 
 # Create all database tables
-print("Creating database tables...")
+print("STARTING APP - PRODUCTION DEPLOYMENT TRIGGER")
 try:
     Base.metadata.create_all(bind=engine)
     print("Database tables created successfully.")
