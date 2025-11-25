@@ -5,12 +5,12 @@ import json
 from loguru import logger
 from datetime import datetime
 
-from config.database import get_db
-from utils.auth import get_current_active_user
-from config.settings import get_settings
-from models.user import User
-from models.member import Member
-from models.analytics import RevenueTransaction
+from backend.database import get_db
+from backend.services.auth_service import get_current_user as get_current_active_user
+from backend.config.settings import get_settings
+from backend.models.user import User
+from backend.models.member import Member
+from backend.models.analytics import RevenueTransaction
 
 router = APIRouter()
 settings = get_settings()
