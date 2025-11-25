@@ -4,7 +4,7 @@ from backend.database import engine, Base
 from backend.api.routes import auth, leads, analytics, workspace, messaging, webhooks, revenue, members, subscriptions, stripe_webhook
 
 # Import all models here to ensure they are registered with Base
-from backend.models import user, lead, workspace, revenue
+from backend.models import user as user_model, lead as lead_model, workspace as workspace_model, revenue as revenue_model
 # The MessageFlow model is in lead.py, so this is sufficient
 
 # Create all database tables

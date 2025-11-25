@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 import stripe
 
 from backend.database import get_db
-from backend.config import STRIPE_WEBHOOK_SECRET
+from backend.config.settings import get_settings
+
+settings = get_settings()
+STRIPE_WEBHOOK_SECRET = settings.STRIPE_WEBHOOK_SECRET
 from backend.models.lead import Lead
 from backend.models.revenue import Subscription
 from backend.models.workspace import Workspace
