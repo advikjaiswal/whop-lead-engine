@@ -6,14 +6,14 @@ from pydantic import BaseModel
 import json
 from loguru import logger
 
-from config.database import get_db
-from models.user import User
-from models.member import Member, RetentionMessage, MemberStatus, ChurnRisk
-from utils.auth import get_current_active_user
-from utils.exceptions import NotFoundError, ValidationError
-from services.whop_service import WhopService
-from services.ai_service import AIService
-from services.email_service import EmailService
+from backend.config.database import get_db
+from backend.models.user import User
+from backend.models.member import Member, RetentionMessage, MemberStatus, ChurnRisk
+from backend.utils.auth import get_current_active_user
+from backend.utils.exceptions import NotFoundError, ValidationError
+from backend.services.whop_service import WhopService
+from backend.services.ai_service import AIService
+from backend.services.email_service import EmailService
 
 router = APIRouter()
 

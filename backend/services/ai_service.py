@@ -2,7 +2,7 @@ import openai
 from typing import Dict, List, Any, Optional
 import json
 from loguru import logger
-from config.settings import get_settings
+from backend.config.settings import get_settings
 
 settings = get_settings()
 

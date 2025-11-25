@@ -8,9 +8,9 @@ from jwt.exceptions import InvalidTokenError
 import hashlib
 import secrets
 import bcrypt
-from config.database import get_db
-from config.settings import get_settings
-from models.user import User
+from backend.config.database import get_db
+from backend.config.settings import get_settings
+from backend.models.user import User
 
 settings = get_settings()
 security = HTTPBearer()

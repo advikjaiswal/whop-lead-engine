@@ -2,8 +2,8 @@ import httpx
 import asyncio
 from typing import List, Dict, Any, Optional
 from loguru import logger
-from config.settings import get_settings
-from models.lead import LeadSource
+from backend.config.settings import get_settings
+from backend.models.lead import LeadSource
 
 settings = get_settings()
 

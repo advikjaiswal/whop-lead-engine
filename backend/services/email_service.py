@@ -1,7 +1,7 @@
 import httpx
 from typing import Optional
 from loguru import logger
-from config.settings import get_settings
+from backend.config.settings import get_settings
 
 settings = get_settings()
 
