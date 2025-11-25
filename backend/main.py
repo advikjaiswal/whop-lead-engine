@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+print("STARTING APP - MINIMAL VERSION")
 # from fastapi.middleware.cors import CORSMiddleware
 # from backend.database import engine, Base
 # from backend.api.routes import auth, leads, analytics, workspace, messaging, webhooks, revenue, members, subscriptions, stripe_webhook
