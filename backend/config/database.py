@@ -30,27 +30,8 @@ try:
     else:
         # Try PostgreSQL first
         try:
-            # Force IPv4 resolution to avoid Render/Supabase IPv6 issues
-            import socket
-            from urllib.parse import urlparse, urlunparse
-
-            db_url = settings.DATABASE_URL
-            try:
-                parsed = urlparse(db_url)
-                if parsed.hostname and "supabase" in parsed.hostname:
-                    # Resolve hostname to IPv4
-                    ipv4_address = socket.gethostbyname(parsed.hostname)
-                    logger.info(f"Resolved {parsed.hostname} to {ipv4_address} (forcing IPv4)")
-                    # Replace hostname with IPv4 in the URL
-                    # Note: We must keep the port if present
-                    netloc = parsed.netloc.replace(parsed.hostname, ipv4_address)
-                    parsed = parsed._replace(netloc=netloc)
-                    db_url = urlunparse(parsed)
-            except Exception as resolve_error:
-                logger.warning(f"Failed to resolve database hostname to IPv4: {resolve_error}")
-
             engine = create_engine(
-                db_url,
+                settings.DATABASE_URL,
                 pool_pre_ping=True,
                 pool_size=2,  # Reduced for Railway/Render
                 max_overflow=3,  # Reduced for Railway/Render
