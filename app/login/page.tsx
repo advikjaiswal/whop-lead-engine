@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { authAPI } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -24,6 +25,7 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState("")
@@ -41,13 +43,12 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const response = await authAPI.login(data.email, data.password)
+      const success = await login(data.email, data.password)
       
-      if (response.success && response.data?.access_token) {
-        localStorage.setItem("auth_token", response.data.access_token)
+      if (success) {
         router.push("/dashboard")
       } else {
-        setError(response.error || "Login failed")
+        setError("Invalid email or password")
       }
     } catch (err) {
       setError("An error occurred. Please try again.")
@@ -169,17 +170,26 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
-              onClick={() => {
-                // Demo login functionality - Generate secure demo token
+              onClick={async () => {
+                // Demo login functionality - Use real demo account
                 setIsLoading(true)
-                setTimeout(() => {
-                  const demoToken = `demo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-                  localStorage.setItem("auth_token", demoToken)
-                  router.push("/dashboard")
-                }, 1000)
+                setError("")
+                try {
+                  const success = await login("demo@whop.com", "DemoPass123")
+                  if (success) {
+                    router.push("/dashboard")
+                  } else {
+                    setError("Demo login failed. Please try again.")
+                  }
+                } catch (err) {
+                  setError("Demo login failed. Please try again.")
+                } finally {
+                  setIsLoading(false)
+                }
               }}
+              disabled={isLoading}
             >
-              Continue as Demo User
+              {isLoading ? "Logging in..." : "Continue as Demo User"}
             </Button>
 
             <div className="text-center text-sm text-white/80">

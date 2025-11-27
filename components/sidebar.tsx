@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SidebarItem } from "@/types"
+import { useLeads } from "@/lib/leads-context"
 
 interface SidebarProps {
   className?: string
@@ -37,7 +38,13 @@ const sidebarItems: SidebarItem[] = [
     label: "Leads",
     href: "/dashboard/leads",
     icon: Target,
-    badge: "12",
+    // badge removed, will be added dynamically
+  },
+  {
+    id: "messaging",
+    label: "Messaging",
+    href: "/dashboard/messaging",
+    icon: MessageSquare,
   },
   {
     id: "retention",
@@ -46,21 +53,21 @@ const sidebarItems: SidebarItem[] = [
     icon: Users,
   },
   {
-    id: "payments",
-    label: "Payments",
-    href: "/dashboard/payments",
-    icon: CreditCard,
-  },
-  {
     id: "analytics",
     label: "Analytics",
     href: "/dashboard/analytics",
     icon: BarChart3,
   },
   {
+    id: "revenue",
+    label: "Revenue",
+    href: "/dashboard/revenue",
+    icon: CreditCard,
+  },
+  {
     id: "settings",
     label: "Settings",
-    href: "/dashboard/settings",
+    href: "/dashboard/settings/workspace",
     icon: Settings,
   },
 ]
@@ -68,6 +75,7 @@ const sidebarItems: SidebarItem[] = [
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = React.useState(false)
+  const { leads } = useLeads()
 
   return (
     <motion.div
@@ -96,7 +104,7 @@ export function Sidebar({ className }: SidebarProps) {
             </span>
           </motion.div>
         )}
-        
+
         <Button
           variant="ghost"
           size="icon"
@@ -118,6 +126,12 @@ export function Sidebar({ className }: SidebarProps) {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
 
+            // Dynamic badge logic
+            let badge = item.badge
+            if (item.id === "leads" && leads.length > 0) {
+              badge = leads.length.toString()
+            }
+
             return (
               <Link key={item.id} href={item.href}>
                 <motion.div
@@ -126,36 +140,36 @@ export function Sidebar({ className }: SidebarProps) {
                   className={cn(
                     "relative flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-md"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     isCollapsed && "justify-center px-2"
                   )}
                 >
-                  <Icon className={cn("h-5 w-5", isCollapsed ? "h-4 w-4" : "")} />
-                  
-                  {!isCollapsed && (
-                    <>
-                      <span className="flex-1">{item.label}</span>
-                      
-                      {item.badge && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white"
-                        >
-                          {item.badge}
-                        </motion.span>
-                      )}
-                    </>
-                  )}
-
+                  {/* Active indicator - positioned at the left edge */}
                   {isActive && (
                     <motion.div
                       layoutId="sidebar-active"
-                      className="absolute inset-0 rounded-lg bg-primary"
-                      style={{ zIndex: -1 }}
-                      transition={{ type: "spring", duration: 0.6 }}
+                      className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"
+                      transition={{ type: "spring", duration: 0.6, bounce: 0.2 }}
                     />
+                  )}
+
+                  <Icon className={cn("h-4 w-4 flex-shrink-0 relative z-10")} />
+
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1 relative z-10">{item.label}</span>
+
+                      {badge && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white text-[10px] relative z-10"
+                        >
+                          {badge}
+                        </motion.span>
+                      )}
+                    </>
                   )}
                 </motion.div>
               </Link>

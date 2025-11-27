@@ -43,7 +43,7 @@ export function Navbar({ title = "Dashboard", className }: NavbarProps) {
           <div>
             <h1 className="text-xl font-semibold text-foreground">{title}</h1>
           </div>
-          
+
           <div className="hidden sm:flex sm:flex-1 sm:max-w-md">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -60,16 +60,10 @@ export function Navbar({ title = "Dashboard", className }: NavbarProps) {
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative h-9 w-9">
+          {/* Notifications - Removed as per user request until functional */}
+          {/* <Button variant="ghost" size="icon" className="relative h-9 w-9">
             <Bell className="h-4 w-4" />
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white"
-            >
-              3
-            </motion.span>
-          </Button>
+          </Button> */}
 
           {/* Theme toggle */}
           <ThemeToggle />

@@ -11,6 +11,36 @@ from backend.services.auth_service import get_password_hash, verify_password, cr
 
 router = APIRouter()
 
+@router.get("/debug_db")
+async def debug_db(db: Session = Depends(get_db)):
+    from sqlalchemy import text, inspect
+    from backend.database import engine
+    import os
+    
+    results = {
+        "database_url_configured": bool(os.getenv("DATABASE_URL")),
+        "connection_successful": False,
+        "tables": [],
+        "users_table_exists": False,
+        "error": None
+    }
+    
+    try:
+        # Test connection
+        db.execute(text("SELECT 1"))
+        results["connection_successful"] = True
+        
+        # Inspect tables
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        results["tables"] = tables
+        results["users_table_exists"] = "users" in tables
+        
+    except Exception as e:
+        results["error"] = str(e)
+        
+    return results
+
 @router.post("/signup", response_model=Token)
 async def signup(user: UserCreate, db: Session = Depends(get_db)):
     if len(user.password) < 8:

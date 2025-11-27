@@ -1,6 +1,17 @@
 {
+  "/_not-found": "app/_not-found.js",
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
+  "/simple/page": "app/simple/page.js",
   "/signup/page": "app/signup/page.js",
-  "/dashboard/retention/page": "app/dashboard/retention/page.js",
+  "/dashboard/messaging/page": "app/dashboard/messaging/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/leads/page": "app/dashboard/leads/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/dashboard/settings/page": "app/dashboard/settings/page.js",
+  "/dashboard/retention/page": "app/dashboard/retention/page.js",
+  "/dashboard/settings/workspace/page": "app/dashboard/settings/workspace/page.js",
+  "/dashboard/setup/page": "app/dashboard/setup/page.js",
+  "/dashboard/analytics/page": "app/dashboard/analytics/page.js",
+  "/dashboard/revenue/page": "app/dashboard/revenue/page.js",
+  "/dashboard/payments/page": "app/dashboard/payments/page.js"
 }

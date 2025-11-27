@@ -62,6 +62,7 @@ class Settings(BaseSettings):
         "https://whop-lead-oeh3dhbj6-adviks-projects-3874d3e7.vercel.app",
         "https://whop-lead-ev0iplbe5-adviks-projects-3874d3e7.vercel.app",
         "https://whop-lead-2zcrybg6y-adviks-projects-3874d3e7.vercel.app",
+        "https://whop-lead-gen.vercel.app",
         "https://*.vercel.app"
     ]
     

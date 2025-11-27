@@ -2,13 +2,13 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
-import { 
-  Users, 
-  AlertTriangle, 
-  TrendingUp, 
+import {
+  Users,
+  AlertTriangle,
+  TrendingUp,
   TrendingDown,
-  RefreshCw, 
-  MessageSquare, 
+  RefreshCw,
+  MessageSquare,
   Filter,
   Search,
   BarChart3
@@ -26,23 +26,53 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { AreaChartComponent as AreaChart } from "@/components/charts/area-chart"
 import { StatsCard } from "@/components/stats-card"
 import { MemberCard } from "@/components/member-card"
-import { AreaChartComponent } from "@/components/charts/area-chart"
-import { dummyMembers } from "@/data/dummy"
+import { membersAPI, analyticsAPI } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 import { Member } from "@/types"
 
 export default function RetentionPage() {
-  const [members, setMembers] = React.useState<Member[]>(dummyMembers)
+  const { user } = useAuth()
+  const [members, setMembers] = React.useState<Member[]>([])
+  const [retentionData, setRetentionData] = React.useState<any>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
   const [riskFilter, setRiskFilter] = React.useState<string>("all")
-  const [loading, setLoading] = React.useState(false)
+  const [loading, setLoading] = React.useState(true)
+  const [syncing, setSyncing] = React.useState(false)
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Always try to fetch data regardless of user state
+        const [membersResponse, retentionResponse] = await Promise.all([
+          membersAPI.getMembers(),
+          analyticsAPI.getRetentionAnalytics()
+        ])
+
+        if (membersResponse.success && membersResponse.data) {
+          setMembers(membersResponse.data.members || [])
+        }
+
+        if (retentionResponse.success && retentionResponse.data) {
+          setRetentionData(retentionResponse.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch retention data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   // Filter members based on search and filters
   const filteredMembers = React.useMemo(() => {
     return members.filter(member => {
-      const matchesSearch = 
+      const matchesSearch =
         member.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.username?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -56,12 +86,15 @@ export default function RetentionPage() {
 
   // Calculate stats
   const stats = React.useMemo(() => {
-    const totalMembers = members.length
+    const totalMembers = retentionData?.total_members || members.length
     const activeMembers = members.filter(m => m.status === 'active').length
-    const atRiskMembers = members.filter(m => m.churnRisk === 'high').length
+    const atRiskMembers = Object.values(retentionData?.churn_risk_distribution || {}).reduce((sum: number, count: any) => {
+      return sum + (typeof count === 'number' ? count : 0)
+    }, 0) as number
     const churnedMembers = members.filter(m => m.status === 'churned').length
-    
-    const retentionRate = totalMembers > 0 ? ((totalMembers - churnedMembers) / totalMembers) * 100 : 0
+
+    const retentionRate = retentionData?.retention_success_rate ||
+      (totalMembers > 0 ? ((totalMembers - churnedMembers) / totalMembers) * 100 : 0)
     const avgEngagement = members.reduce((sum, member) => sum + member.engagementScore, 0) / members.length * 100
 
     return {
@@ -72,30 +105,30 @@ export default function RetentionPage() {
       retentionRate: Math.round(retentionRate * 10) / 10,
       avgEngagement: Math.round(avgEngagement)
     }
-  }, [members])
+  }, [members, retentionData])
 
-  // Sample retention data for chart
-  const retentionData = [
-    { name: 'Jan', value: 92 },
-    { name: 'Feb', value: 89 },
-    { name: 'Mar', value: 94 },
-    { name: 'Apr', value: 91 },
-    { name: 'May', value: 88 },
-    { name: 'Jun', value: 93 },
-    { name: 'Jul', value: 95 },
-    { name: 'Aug', value: 92 },
-    { name: 'Sep', value: 89 },
-    { name: 'Oct', value: 94 },
-    { name: 'Nov', value: 96 }
-  ]
+  // Get chart data from retention analytics
+  const chartData = (retentionData?.activity_trends || []).map((item: any) => ({
+    name: new Date(item.week).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    value: item.active_members,
+  }));
 
-  const handleSyncMembers = () => {
-    setLoading(true)
-    // Simulate sync
-    setTimeout(() => {
-      setLoading(false)
-      // TODO: Implement actual sync functionality
-    }, 2000)
+  const handleSyncMembers = async () => {
+    setSyncing(true)
+    try {
+      const response = await membersAPI.syncMembers()
+      if (response.success) {
+        // Refresh members data
+        const membersResponse = await membersAPI.getMembers()
+        if (membersResponse.success && membersResponse.data) {
+          setMembers(membersResponse.data.members || [])
+        }
+      }
+    } catch (error) {
+      console.error('Sync failed:', error)
+    } finally {
+      setSyncing(false)
+    }
   }
 
   const handleSendMessage = (member: Member) => {
@@ -114,26 +147,37 @@ export default function RetentionPage() {
     // TODO: Implement bulk retention campaign
   }
 
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+          <div className="text-lg text-muted-foreground">Loading retention data...</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Member Retention</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Member Retention</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Monitor member engagement and prevent churn with AI-powered insights.
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={handleSyncMembers} loading={loading}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <Button variant="outline" size="sm" onClick={handleSyncMembers} loading={syncing} className="w-full sm:w-auto">
             <RefreshCw className="mr-2 h-4 w-4" />
             Sync Members
           </Button>
-          <Button size="sm" onClick={handleBulkRetentionCampaign}>
+          <Button size="sm" onClick={handleBulkRetentionCampaign} className="w-full sm:w-auto">
             <MessageSquare className="mr-2 h-4 w-4" />
             Retention Campaign
           </Button>
@@ -141,7 +185,7 @@ export default function RetentionPage() {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatsCard
           title="Total Members"
           value={stats.total}
@@ -151,24 +195,18 @@ export default function RetentionPage() {
         <StatsCard
           title="Active Members"
           value={stats.active}
-          change={5.2}
-          trend="up"
           icon={TrendingUp}
           format="number"
         />
         <StatsCard
           title="At Risk"
           value={stats.atRisk}
-          change={-12.5}
-          trend="down"
           icon={AlertTriangle}
           format="number"
         />
         <StatsCard
           title="Retention Rate"
           value={stats.retentionRate}
-          change={2.1}
-          trend="up"
           icon={BarChart3}
           format="percentage"
         />
@@ -177,15 +215,15 @@ export default function RetentionPage() {
       {/* Retention Chart */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <AreaChartComponent
-            title="Retention Rate Trend"
-            description="Monthly retention rate over time"
-            data={retentionData}
+          <AreaChart
+            title="Member Activity Trends"
+            description="Weekly active member count over the last 4 weeks"
+            data={chartData}
             dataKey="value"
-            color="#10b981"
+            className="h-full"
           />
         </div>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
@@ -235,7 +273,7 @@ export default function RetentionPage() {
                 />
               </div>
             </div>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">

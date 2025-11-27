@@ -22,15 +22,14 @@ app = FastAPI(
 )
 
 # CORS middleware
-origins = [
-    "http://localhost:3000",
-    "https://whop-lead-gen.vercel.app",
-    "https://*.vercel.app",
-]
+# CORS middleware
+from backend.config.settings import get_settings
+settings = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,6 +46,9 @@ app.include_router(revenue.router, prefix="/api/revenue", tags=["Revenue"])
 app.include_router(members.router, prefix="/api/members", tags=["Members"])
 app.include_router(subscriptions.router, prefix="/api/subscriptions", tags=["Subscriptions"])
 app.include_router(stripe_webhook.router, prefix="/api/webhooks", tags=["Stripe Webhooks"])
+
+from backend.api.routes import debug
+app.include_router(debug.router, prefix="/api/debug", tags=["Debug"])
 
 @app.get("/health", tags=["Health"])
 async def health_check():

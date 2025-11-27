@@ -9,13 +9,14 @@ import { cn, formatNumber, formatCurrency, formatPercentage } from "@/lib/utils"
 
 interface StatsCardProps {
   title: string
-  value: number
+  value: number | string
   change?: number
   trend?: 'up' | 'down' | 'neutral'
   icon: LucideIcon
   format?: 'number' | 'currency' | 'percentage'
   className?: string
   loading?: boolean
+  suffix?: string
 }
 
 export function StatsCard({
@@ -27,8 +28,12 @@ export function StatsCard({
   format = 'number',
   className,
   loading = false,
+  suffix,
 }: StatsCardProps) {
-  const formatValue = (val: number) => {
+  const formatValue = (val: number | string) => {
+    if (typeof val === 'string') {
+      return val
+    }
     switch (format) {
       case 'currency':
         return formatCurrency(val)
@@ -99,6 +104,7 @@ export function StatsCard({
                 className="text-3xl font-bold tracking-tight"
               >
                 {formatValue(value)}
+                {suffix && <span className="text-xl text-muted-foreground">{suffix}</span>}
               </motion.p>
               {change !== undefined && (
                 <motion.div

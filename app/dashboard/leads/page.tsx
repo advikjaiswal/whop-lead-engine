@@ -29,53 +29,34 @@ import {
 import { StatsCard } from "@/components/stats-card"
 import { LeadsTable } from "@/components/leads-table"
 import { SimpleLeadDiscovery } from "@/components/simple-lead-discovery"
+import { LeadDetailModal } from "@/components/lead-detail-modal"
+import { ContactLeadModal } from "@/components/contact-lead-modal"
 import { Lead } from "@/types"
-import { leadsAPI } from "@/lib/api"
-import { toast } from "sonner"
+import { useLeads } from "@/lib/leads-context"
 
 export default function LeadsPage() {
-  const [leads, setLeads] = React.useState<Lead[]>([])
-  const [initialLoading, setInitialLoading] = React.useState(true)
+  const { leads, loading: initialLoading, addLeads, deleteLead } = useLeads()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
   const [sourceFilter, setSourceFilter] = React.useState<string>("all")
   const [loading, setLoading] = React.useState(false)
   const [discoveryModalOpen, setDiscoveryModalOpen] = React.useState(false)
+  const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null)
+  const [leadDetailModalOpen, setLeadDetailModalOpen] = React.useState(false)
+  const [contactModalOpen, setContactModalOpen] = React.useState(false)
 
-  // Fetch leads from API on component mount
-  React.useEffect(() => {
-    const fetchLeads = async () => {
-      try {
-        setInitialLoading(true)
-        const response = await leadsAPI.getLeads()
-        if (response.success && response.data) {
-          setLeads(response.data.leads || [])
-        } else {
-          console.error('Failed to fetch leads:', response.error)
-          toast.error('Failed to load leads')
-        }
-      } catch (error) {
-        console.error('Error fetching leads:', error)
-        toast.error('Error loading leads')
-      } finally {
-        setInitialLoading(false)
-      }
-    }
-
-    fetchLeads()
-  }, [])
+  // No need to fetch leads manually - the context handles this
 
   // Filter leads based on search and filters
   const filteredLeads = React.useMemo(() => {
     return leads.filter(lead => {
       const matchesSearch = 
-        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.content.toLowerCase().includes(searchQuery.toLowerCase())
 
       const matchesStatus = statusFilter === "all" || lead.status === statusFilter
-      const matchesSource = sourceFilter === "all" || lead.source === sourceFilter
+      const matchesSource = sourceFilter === "all" || lead.subreddit === sourceFilter
 
       return matchesSearch && matchesStatus && matchesSource
     })
@@ -84,46 +65,36 @@ export default function LeadsPage() {
   // Calculate stats
   const stats = React.useMemo(() => {
     const totalLeads = leads.length
-    const newLeads = leads.filter(l => l.status === 'new').length
-    const contacted = leads.filter(l => l.status === 'contacted').length
-    const converted = leads.filter(l => l.status === 'converted').length
+    const warmLeads = leads.filter(l => l.status === 'warm').length
+    const hotLeads = leads.filter(l => l.status === 'hot').length
     
-    const avgScore = leads.reduce((sum, lead) => sum + lead.intentScore, 0) / leads.length * 100
-    const conversionRate = totalLeads > 0 ? (converted / totalLeads) * 100 : 0
+    const avgScore = totalLeads > 0 
+      ? (leads.reduce((sum, lead) => sum + (lead.quality_score || 0), 0) / totalLeads)
+      : 0
+    
+    const conversionRate = totalLeads > 0 ? Math.round((hotLeads / totalLeads) * 100 * 10) / 10 : 0
 
     return {
       total: totalLeads,
-      new: newLeads,
-      contacted,
-      converted,
-      avgScore: Math.round(avgScore),
-      conversionRate: Math.round(conversionRate * 10) / 10
+      warm: warmLeads,
+      hot: hotLeads,
+      avgScore: avgScore,
+      conversionRate
     }
   }, [leads])
 
   const handleViewLead = (lead: Lead) => {
-    console.log("View lead:", lead)
-    // TODO: Open lead detail modal
+    setSelectedLead(lead)
+    setLeadDetailModalOpen(true)
   }
 
   const handleContactLead = (lead: Lead) => {
-    console.log("Contact lead:", lead)
-    // TODO: Open contact modal or redirect to campaign creation
+    setSelectedLead(lead)
+    setContactModalOpen(true)
   }
 
-  const handleDeleteLead = async (leadId: string) => {
-    try {
-      const response = await leadsAPI.deleteLead(leadId)
-      if (response.success) {
-        setLeads(prev => prev.filter(lead => lead.id !== leadId))
-        toast.success('Lead deleted successfully')
-      } else {
-        toast.error('Failed to delete lead')
-      }
-    } catch (error) {
-      console.error('Error deleting lead:', error)
-      toast.error('Error deleting lead')
-    }
+  const handleDeleteLead = async (leadId: number) => {
+    await deleteLead(leadId)
   }
 
   const handleImportLeads = () => {
@@ -136,8 +107,7 @@ export default function LeadsPage() {
   }
 
   const handleLeadsDiscovered = (newLeads: Lead[]) => {
-    setLeads(prev => [...newLeads, ...prev])
-    toast.success(`${newLeads.length} new leads discovered!`)
+    addLeads(newLeads)
   }
 
   const handleDiscoverLeads = () => {
@@ -183,28 +153,23 @@ export default function LeadsPage() {
           format="number"
         />
         <StatsCard
-          title="New Leads"
-          value={stats.new}
-          change={15.2}
-          trend="up"
+          title="Warm Leads"
+          value={stats.warm}
+          icon={TrendingUp}
+          format="number"
+        />
+        <StatsCard
+          title="Hot Leads (Converted)"
+          value={stats.hot}
           icon={Users}
           format="number"
         />
         <StatsCard
-          title="Avg. Intent Score"
-          value={stats.avgScore}
-          change={8.1}
-          trend="up"
-          icon={TrendingUp}
-          format="percentage"
-        />
-        <StatsCard
-          title="Conversion Rate"
-          value={stats.conversionRate}
-          change={-2.3}
-          trend="down"
+          title="Avg. Quality Score"
+          value={Math.round(stats.avgScore * 10) / 10}
           icon={MessageSquare}
-          format="percentage"
+          format="number"
+          suffix="/ 10"
         />
       </div>
 
@@ -222,7 +187,7 @@ export default function LeadsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search leads by name, email, or content..."
+                  placeholder="Search by author, title, or content..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -243,24 +208,19 @@ export default function LeadsPage() {
                 <DropdownMenuItem onClick={() => setStatusFilter("all")}>
                   All Statuses
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("new")}>
-                  New
+                <DropdownMenuItem onClick={() => setStatusFilter("cold")}>
+                  Cold
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("contacted")}>
-                  Contacted
+                <DropdownMenuItem onClick={() => setStatusFilter("warm")}>
+                  Warm
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("responded")}>
-                  Responded
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("converted")}>
-                  Converted
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("ignored")}>
-                  Ignored
+                <DropdownMenuItem onClick={() => setStatusFilter("hot")}>
+                  Hot
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Source filter can be improved later to dynamically get subreddits */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -274,17 +234,11 @@ export default function LeadsPage() {
                 <DropdownMenuItem onClick={() => setSourceFilter("all")}>
                   All Sources
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSourceFilter("reddit")}>
-                  Reddit
+                <DropdownMenuItem onClick={() => setSourceFilter("entrepreneur")}>
+                  r/entrepreneur
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSourceFilter("twitter")}>
-                  Twitter
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSourceFilter("discord")}>
-                  Discord
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSourceFilter("manual")}>
-                  Manual
+                <DropdownMenuItem onClick={() => setSourceFilter("business")}>
+                  r/business
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -327,6 +281,27 @@ export default function LeadsPage() {
         isOpen={discoveryModalOpen}
         onClose={() => setDiscoveryModalOpen(false)}
         onLeadsDiscovered={handleLeadsDiscovered}
+      />
+
+      {/* Lead Detail Modal */}
+      <LeadDetailModal
+        lead={selectedLead}
+        isOpen={leadDetailModalOpen}
+        onClose={() => {
+          setLeadDetailModalOpen(false)
+          setSelectedLead(null)
+        }}
+        onContact={handleContactLead}
+      />
+
+      {/* Contact Lead Modal */}
+      <ContactLeadModal
+        lead={selectedLead}
+        isOpen={contactModalOpen}
+        onClose={() => {
+          setContactModalOpen(false)
+          setSelectedLead(null)
+        }}
       />
     </div>
   )

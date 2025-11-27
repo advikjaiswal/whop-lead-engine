@@ -23,65 +23,55 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Lead } from "@/types"
-import { cn, truncateText, generateGradient } from "@/lib/utils"
+import { Lead, LeadStatus } from "../types";
+import { cn, truncateText } from "@/lib/utils"
 
 interface LeadsTableProps {
   leads: Lead[]
   loading?: boolean
   onViewLead?: (lead: Lead) => void
   onContactLead?: (lead: Lead) => void
-  onDeleteLead?: (leadId: string) => void
+  onDeleteLead?: (leadId: number) => void | Promise<void>
   className?: string
 }
 
-const getStatusVariant = (status: Lead['status']) => {
+const getStatusVariant = (status: LeadStatus) => {
   switch (status) {
-    case 'new':
+    case 'cold':
       return 'info'
-    case 'contacted':
+    case 'warm':
       return 'warning'
-    case 'responded':
-      return 'secondary'
-    case 'converted':
+    case 'hot':
       return 'success'
-    case 'ignored':
-      return 'outline'
-    case 'unqualified':
-      return 'destructive'
     default:
       return 'default'
   }
 }
 
-const getGradeColor = (grade: Lead['qualityGrade']) => {
-  switch (grade) {
-    case 'A':
-      return 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400'
-    case 'B':
-      return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400'
-    case 'C':
-      return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400'
-    case 'D':
-      return 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400'
-    default:
-      return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400'
-  }
+const getSentimentColor = (sentiment: string) => {
+    if (sentiment === 'positive') return 'text-green-600';
+    if (sentiment === 'negative') return 'text-red-600';
+    return 'text-gray-500';
 }
 
-const getSourceIcon = (source: Lead['source']) => {
-  switch (source) {
-    case 'reddit':
-      return '🟠'
-    case 'twitter':
-      return '🐦'
-    case 'discord':
-      return '💬'
-    case 'manual':
-      return '✋'
-    default:
-      return '📄'
+const getSourceIcon = (url: string) => {
+  if (url.includes('reddit.com')) return '🟠'
+  if (url.includes('twitter.com')) return '🐦'
+  if (url.includes('discord.com')) return '💬'
+  return '📄'
+}
+
+const getSourceName = (lead: Lead) => {
+  if (lead.subreddit) {
+    return `r/${lead.subreddit}`
   }
+  if (lead.source_url.includes('twitter.com')) {
+    return 'Twitter'
+  }
+  if (lead.source_url.includes('discord.com')) {
+    return 'Discord'
+  }
+  return 'Unknown'
 }
 
 export function LeadsTable({
@@ -93,31 +83,12 @@ export function LeadsTable({
   className,
 }: LeadsTableProps) {
   if (loading) {
+    // Skeleton loader remains the same
     return (
-      <Card className={className}>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
-              <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                  <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                </div>
-                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+        <Card className={className}>
+            <CardHeader><CardTitle>Loading Leads...</CardTitle></CardHeader>
+            <CardContent><p>Please wait while we fetch the leads.</p></CardContent>
+        </Card>
     )
   }
 
@@ -138,15 +109,11 @@ export function LeadsTable({
       </CardHeader>
       <CardContent>
         {leads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
-              👥
-            </div>
+          <div className="text-center py-12">
             <h3 className="text-lg font-medium mb-2">No leads found</h3>
-            <p className="text-muted-foreground mb-4">
-              Start by importing leads or running a discovery campaign
+            <p className="text-muted-foreground">
+              Use the "Discover Leads" feature to find new opportunities.
             </p>
-            <Button>Import Leads</Button>
           </div>
         ) : (
           <div className="rounded-md border">
@@ -155,10 +122,9 @@ export function LeadsTable({
                 <TableRow>
                   <TableHead>Lead</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Grade</TableHead>
+                  <TableHead>Quality</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Content</TableHead>
+                  <TableHead>Stage</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -172,72 +138,32 @@ export function LeadsTable({
                     className="group hover:bg-muted/50"
                   >
                     <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-full text-white text-sm font-medium",
-                            `bg-gradient-to-br ${generateGradient(lead.name)}`
-                          )}
-                        >
-                          {lead.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium">{lead.name}</p>
-                          {lead.email && (
-                            <p className="text-sm text-muted-foreground">
-                              {lead.email}
-                            </p>
-                          )}
-                          {lead.username && (
-                            <p className="text-sm text-muted-foreground">
-                              @{lead.username}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      <div className="font-medium">{lead.author}</div>
+                      <div className="text-sm text-muted-foreground">{truncateText(lead.title, 60)}</div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <span className="text-lg">
-                          {getSourceIcon(lead.source)}
+                          {getSourceIcon(lead.source_url)}
                         </span>
                         <span className="capitalize text-sm">
-                          {lead.source}
+                          {getSourceName(lead)}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${lead.intentScore * 100}%` }}
-                          />
+                        <div className="flex flex-col">
+                            <span className="font-medium">{lead.quality_score.toFixed(1)} / 10</span>
+                            <span className={cn("text-xs", getSentimentColor(lead.sentiment))}>{lead.sentiment}</span>
                         </div>
-                        <span className="text-sm font-medium">
-                          {Math.round(lead.intentScore * 100)}%
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
-                          getGradeColor(lead.qualityGrade)
-                        )}
-                      >
-                        {lead.qualityGrade}
-                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(lead.status)}>
-                        {lead.status.replace('_', ' ')}
+                        {lead.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <p className="text-sm text-muted-foreground max-w-xs">
-                        {truncateText(lead.content, 80)}
-                      </p>
+                        <span className="text-sm capitalize">{lead.outreach_stage.replace('_', ' ')}</span>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -255,18 +181,12 @@ export function LeadsTable({
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onContactLead?.(lead)}>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Contact Lead
+                          <DropdownMenuItem
+                            onClick={() => window.open(lead.source_url, '_blank')}
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            View Source
                           </DropdownMenuItem>
-                          {lead.url && (
-                            <DropdownMenuItem
-                              onClick={() => window.open(lead.url, '_blank')}
-                            >
-                              <ExternalLink className="mr-2 h-4 w-4" />
-                              View Source
-                            </DropdownMenuItem>
-                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => onDeleteLead?.(lead.id)}

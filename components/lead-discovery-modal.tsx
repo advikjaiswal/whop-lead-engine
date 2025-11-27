@@ -176,29 +176,9 @@ export function LeadDiscoveryModal({ isOpen, onClose, onLeadsDiscovered }: LeadD
       const response = await leadsAPI.discoverLeads(criteria)
       
       if (response.success && response.data) {
-        // Transform API response to Lead objects
-        const transformedLeads = response.data.map((apiLead: any, index: number) => ({
-          id: apiLead.id?.toString() || `discovered-${Date.now()}-${index}`,
-          name: apiLead.author || 'Unknown User',
-          email: undefined,
-          username: apiLead.author,
-          source: 'reddit' as const,
-          content: apiLead.content || apiLead.title || '',
-          url: apiLead.source_url,
-          intentScore: apiLead.quality_score || 0,
-          qualityGrade: (apiLead.quality_score >= 0.7 ? 'A' : 
-                        apiLead.quality_score >= 0.5 ? 'B' : 
-                        apiLead.quality_score >= 0.3 ? 'C' : 'D') as 'A' | 'B' | 'C' | 'D',
-          status: 'new' as const,
-          interests: keywords,
-          painPoints: [],
-          summary: apiLead.title || apiLead.content?.slice(0, 150) + '...',
-          createdAt: new Date(apiLead.discovered_at || Date.now()),
-          updatedAt: new Date(apiLead.discovered_at || Date.now())
-        }))
-        
-        setDiscoveredLeads(transformedLeads)
-        toast.success(`Discovered ${transformedLeads.length} new leads!`)
+        const leads = response.data;
+        setDiscoveredLeads(leads)
+        toast.success(`Discovered ${leads.length} new leads!`)
         setStep(4)
       } else {
         throw new Error(response.error || 'Failed to discover leads')
@@ -431,15 +411,15 @@ export function LeadDiscoveryModal({ isOpen, onClose, onLeadsDiscovered }: LeadD
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
-                    {discoveredLeads.filter(l => l.qualityGrade === 'A' || l.qualityGrade === 'B').length}
+                    {discoveredLeads.filter(l => l.quality_score >= 7).length}
                   </div>
-                  <div className="text-sm text-muted-foreground">High Quality (A-B)</div>
+                  <div className="text-sm text-muted-foreground">High Quality (7+)</div>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
-                    {Math.round(discoveredLeads.reduce((sum, l) => sum + l.intentScore, 0) / discoveredLeads.length * 100)}%
+                    {(discoveredLeads.reduce((sum, l) => sum + l.quality_score, 0) / discoveredLeads.length).toFixed(1) || 0}
                   </div>
-                  <div className="text-sm text-muted-foreground">Avg. Intent Score</div>
+                  <div className="text-sm text-muted-foreground">Avg. Quality Score</div>
                 </div>
               </div>
 
@@ -448,21 +428,21 @@ export function LeadDiscoveryModal({ isOpen, onClose, onLeadsDiscovered }: LeadD
                   <Card key={lead.id} className="p-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium">{lead.name}</div>
+                        <div className="font-medium">{lead.author}</div>
                         <div className="text-sm text-muted-foreground truncate max-w-md">
-                          {lead.summary || lead.content.slice(0, 100)}...
+                          {lead.title || lead.content.slice(0, 100)}...
                         </div>
                       </div>
                       <div className="flex space-x-2">
                         <Badge variant={
-                          lead.qualityGrade === 'A' ? 'default' :
-                          lead.qualityGrade === 'B' ? 'secondary' :
+                          lead.quality_score >= 7 ? 'default' :
+                          lead.quality_score >= 4 ? 'secondary' :
                           'outline'
                         }>
-                          {lead.qualityGrade}
+                          {lead.quality_score.toFixed(1)}
                         </Badge>
                         <Badge variant="outline">
-                          {Math.round(lead.intentScore * 100)}%
+                          {lead.sentiment}
                         </Badge>
                       </div>
                     </div>

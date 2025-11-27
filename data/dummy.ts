@@ -12,89 +12,57 @@ export const dummyUser = {
 
 export const dummyLeads: Lead[] = [
   {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    username: 'sarahj_startup',
-    source: 'reddit',
+    id: 1,
+    title: "Struggling to find good mentors",
     content: 'Been struggling to find good mentors for my startup journey. Looking for a community of like-minded entrepreneurs.',
-    url: 'https://reddit.com/r/entrepreneur/post/123',
-    intentScore: 0.92,
-    qualityGrade: 'A',
-    status: 'new',
-    interests: ['startup', 'mentorship', 'networking'],
-    painPoints: ['lack of guidance', 'isolation', 'decision making'],
-    summary: 'High-intent founder actively seeking community and mentorship',
-    personalizationData: {
-      recommendedApproach: 'Focus on mentorship and community aspects',
-      keyTalkingPoints: ['experienced founders', 'weekly mentorship calls', 'supportive community'],
-      urgencyLevel: 'high'
-    },
-    createdAt: new Date('2024-11-01'),
-    updatedAt: new Date('2024-11-01')
+    author: 'sarahj_startup',
+    source_url: 'https://reddit.com/r/entrepreneur/post/123',
+    subreddit: 'entrepreneur',
+    quality_score: 9.2,
+    sentiment: 'positive',
+    discovered_at: new Date('2024-11-01').toISOString(),
+    status: 'cold',
+    outreach_stage: 'not_contacted',
+    personalizedMessage: "Hey Sarah, I saw your post about finding mentors. Our community is full of experienced entrepreneurs who love to help each other out. We have weekly mentorship calls and a really supportive group. I think you'd get a lot of value from it."
   },
   {
-    id: '2',
-    name: 'Mike Chen',
-    email: 'mike.chen@example.com',
-    username: 'mikec_dev',
-    source: 'twitter',
+    id: 2,
+    title: "Launched my SaaS, need marketing help",
     content: 'Just launched my SaaS but struggling with marketing. Any recommendations for courses or communities?',
-    url: 'https://twitter.com/mikec_dev/status/123',
-    intentScore: 0.78,
-    qualityGrade: 'B',
-    status: 'contacted',
-    interests: ['saas', 'marketing', 'growth'],
-    painPoints: ['marketing knowledge gap', 'customer acquisition'],
-    summary: 'SaaS founder needing marketing guidance and community support',
-    personalizationData: {
-      recommendedApproach: 'Highlight marketing expertise and success stories',
-      keyTalkingPoints: ['marketing playbooks', 'growth strategies', 'case studies'],
-      urgencyLevel: 'medium'
-    },
-    createdAt: new Date('2024-10-30'),
-    updatedAt: new Date('2024-11-01')
+    author: 'mikec_dev',
+    source_url: 'https://twitter.com/mikec_dev/status/123',
+    subreddit: 'saas',
+    quality_score: 7.8,
+    sentiment: 'neutral',
+    discovered_at: new Date('2024-10-30').toISOString(),
+    status: 'warm',
+    outreach_stage: 'contacted',
   },
   {
-    id: '3',
-    name: 'Emily Rodriguez',
-    username: 'emily_creates',
-    source: 'discord',
+    id: 3,
+    title: "How to monetize content creation skills?",
     content: 'Looking to monetize my content creation skills. Want to learn about building digital products.',
-    intentScore: 0.65,
-    qualityGrade: 'B',
-    status: 'responded',
-    interests: ['content creation', 'digital products', 'monetization'],
-    painPoints: ['monetization strategies', 'product development'],
-    summary: 'Content creator exploring digital product opportunities',
-    personalizationData: {
-      recommendedApproach: 'Focus on creator economy and digital products',
-      keyTalkingPoints: ['creator success stories', 'product development', 'monetization'],
-      urgencyLevel: 'medium'
-    },
-    createdAt: new Date('2024-10-28'),
-    updatedAt: new Date('2024-10-31')
+    author: 'emily_creates',
+    source_url: 'https://discord.com/channel/123/456',
+    subreddit: '',
+    quality_score: 6.5,
+    sentiment: 'positive',
+    discovered_at: new Date('2024-10-28').toISOString(),
+    status: 'hot',
+    outreach_stage: 'responded',
   },
   {
-    id: '4',
-    name: 'Alex Thompson',
-    email: 'alex@example.com',
-    username: 'alextech',
-    source: 'reddit',
+    id: 4,
+    title: "Advice for starting a side hustle",
     content: 'Thinking about starting a side hustle while working full-time. Any advice?',
-    intentScore: 0.45,
-    qualityGrade: 'C',
-    status: 'new',
-    interests: ['side hustle', 'work-life balance'],
-    painPoints: ['time management', 'getting started'],
-    summary: 'Early-stage interest in entrepreneurship, still exploring',
-    personalizationData: {
-      recommendedApproach: 'Educational content and beginner-friendly approach',
-      keyTalkingPoints: ['side hustle success', 'time management', 'beginner resources'],
-      urgencyLevel: 'low'
-    },
-    createdAt: new Date('2024-10-25'),
-    updatedAt: new Date('2024-10-25')
+    author: 'alextech',
+    source_url: 'https://reddit.com/r/sidehustle/post/456',
+    subreddit: 'sidehustle',
+    quality_score: 4.5,
+    sentiment: 'neutral',
+    discovered_at: new Date('2024-10-25').toISOString(),
+    status: 'cold',
+    outreach_stage: 'not_contacted',
   }
 ]
 
@@ -184,26 +152,11 @@ export const dummyMembers: Member[] = [
 ]
 
 export const dummyDashboardStats: DashboardStats = {
-  leadsGenerated: {
-    total: 1247,
-    change: 12.5,
-    trend: 'up'
-  },
-  conversions: {
-    total: 89,
-    change: 8.3,
-    trend: 'up'
-  },
-  revenue: {
-    total: 24580,
-    change: -2.1,
-    trend: 'down'
-  },
-  retention: {
-    rate: 92.5,
-    change: 3.2,
-    trend: 'up'
-  }
+  revenue_generated: 24580,
+  paid_members_added: 89,
+  new_leads_captured: 1247,
+  warm_leads: 342,
+  outreach_messages_sent: 856
 }
 
 export const dummyActivityFeed: ActivityFeedItem[] = [

@@ -9,28 +9,59 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { dummyUser } from "@/data/dummy"
+import { useAuth } from "@/lib/auth-context"
+import { authAPI } from "@/lib/api"
+import { toast } from "sonner"
 
 export default function SettingsPage() {
+  const { user, refreshUser } = useAuth()
   const [showApiKeys, setShowApiKeys] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   const [formData, setFormData] = React.useState({
-    fullName: dummyUser.fullName,
-    email: dummyUser.email,
-    whopCommunityName: dummyUser.whopCommunityName || '',
-    whopCommunityId: dummyUser.whopCommunityId || '',
+    fullName: '',
+    email: '',
+    whopCommunityName: '',
+    whopCommunityId: '',
     whopApiKey: '',
     openaiApiKey: '',
     stripeSecretKey: '',
     resendApiKey: ''
   })
 
+  React.useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.fullName || '',
+        email: user.email || '',
+        whopCommunityName: user.whopCommunityName || '',
+        whopCommunityId: user.whopCommunityId || ''
+      }))
+    }
+  }, [user])
+
   const handleSave = async () => {
     setLoading(true)
-    // Simulate save
-    setTimeout(() => {
+    try {
+      const updateData = {
+        full_name: formData.fullName,
+        whop_community_name: formData.whopCommunityName,
+        whop_community_id: formData.whopCommunityId
+      }
+      
+      const response = await authAPI.updateProfile(updateData)
+      if (response.success) {
+        await refreshUser()
+        toast.success('Settings saved successfully!')
+      } else {
+        toast.error('Failed to save settings')
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error)
+      toast.error('Error saving settings')
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
   const handleInputChange = (field: string, value: string) => {

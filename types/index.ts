@@ -9,34 +9,29 @@ export interface User {
   updatedAt: Date
 }
 
+export type LeadStatus = 'cold' | 'warm' | 'hot';
+
 export interface Lead {
-  id: string
-  name: string
-  email?: string
-  username?: string
-  source: LeadSource
-  content: string
-  url?: string
-  intentScore: number
-  qualityGrade: 'A' | 'B' | 'C' | 'D'
-  status: LeadStatus
-  interests: string[]
-  painPoints: string[]
-  summary: string
-  personalizationData?: {
-    recommendedApproach: string
-    keyTalkingPoints: string[]
-    urgencyLevel: 'low' | 'medium' | 'high'
-  }
-  createdAt: Date
-  updatedAt: Date
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  source_url: string;
+  subreddit: string;
+  quality_score: number;
+  sentiment: string;
+  discovered_at: string;
+  status: LeadStatus;
+  outreach_stage: string;
+  attribution_id?: string;
+  personalizedMessage?: string;
 }
 
 export type LeadSource = 'reddit' | 'twitter' | 'discord' | 'manual'
-export type LeadStatus = 'new' | 'contacted' | 'responded' | 'converted' | 'ignored' | 'unqualified'
+// export type LeadStatus = 'new' | 'contacted' | 'responded' | 'converted' | 'ignored' | 'unqualified'
 
 export interface Campaign {
-  id: string
+  id: string;
   name: string
   messageTemplate: string
   subjectTemplate?: string
@@ -87,26 +82,11 @@ export interface Analytics {
 }
 
 export interface DashboardStats {
-  leadsGenerated: {
-    total: number
-    change: number
-    trend: 'up' | 'down' | 'neutral'
-  }
-  conversions: {
-    total: number
-    change: number
-    trend: 'up' | 'down' | 'neutral'
-  }
-  revenue: {
-    total: number
-    change: number
-    trend: 'up' | 'down' | 'neutral'
-  }
-  retention: {
-    rate: number
-    change: number
-    trend: 'up' | 'down' | 'neutral'
-  }
+  revenue_generated: number;
+  paid_members_added: number;
+  new_leads_captured: number;
+  warm_leads: number;
+  outreach_messages_sent: number;
 }
 
 export interface ActivityFeedItem {
@@ -154,4 +134,14 @@ export interface Modal {
   title?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
   showClose?: boolean
+}
+
+export interface MessageFlow {
+  id: number;
+  name: string;
+  welcome_message?: string;
+  follow_up_sequence?: string;
+  offer_push?: string;
+  abandoned_funnel_ping?: string;
+  winback_attempt?: string;
 }

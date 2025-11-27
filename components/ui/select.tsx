@@ -14,6 +14,34 @@ export function Select({ value, onValueChange, children }: SelectProps) {
   const [selectedLabel, setSelectedLabel] = useState('')
   const selectRef = useRef<HTMLDivElement>(null)
 
+  // Sync selectedValue with value prop
+  useEffect(() => {
+    if (value !== undefined) {
+      setSelectedValue(value)
+    }
+  }, [value])
+
+  // Find and set the label for the current value from children
+  useEffect(() => {
+    if (selectedValue && children) {
+      React.Children.forEach(children, (child) => {
+        if (React.isValidElement(child) && child.type === SelectContent) {
+          React.Children.forEach(child.props.children, (item) => {
+            if (React.isValidElement(item) && item.type === SelectItem) {
+              const itemProps = item.props as any
+              if (itemProps.value === selectedValue) {
+                const label = typeof itemProps.children === 'string'
+                  ? itemProps.children
+                  : selectedValue
+                setSelectedLabel(label)
+              }
+            }
+          })
+        }
+      })
+    }
+  }, [selectedValue, children])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (selectRef.current && !selectRef.current.contains(event.target as Node)) {

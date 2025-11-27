@@ -76,6 +76,18 @@ export function SimpleLeadDiscovery({ isOpen, onClose, onLeadsDiscovered }: Simp
     }
   }
 
+  const addSuggestedKeyword = (keyword: string) => {
+    if (!keywords.includes(keyword)) {
+      setKeywords([...keywords, keyword])
+    }
+  }
+
+  const addSuggestedSubreddit = (subreddit: string) => {
+    if (!subreddits.includes(subreddit)) {
+      setSubreddits([...subreddits, subreddit])
+    }
+  }
+
   const removeKeyword = (keyword: string) => {
     setKeywords(keywords.filter(k => k !== keyword))
   }
@@ -111,29 +123,9 @@ export function SimpleLeadDiscovery({ isOpen, onClose, onLeadsDiscovered }: Simp
       const response = await leadsAPI.discoverLeads(criteria)
       
       if (response.success && response.data) {
-        // Transform API response to Lead objects
-        const transformedLeads = response.data.map((apiLead: any, index: number) => ({
-          id: apiLead.id?.toString() || `discovered-${Date.now()}-${index}`,
-          name: apiLead.author || 'Unknown User',
-          email: undefined,
-          username: apiLead.author,
-          source: 'reddit' as const,
-          content: apiLead.content || apiLead.title || '',
-          url: apiLead.source_url,
-          intentScore: apiLead.quality_score || 0,
-          qualityGrade: (apiLead.quality_score >= 0.7 ? 'A' : 
-                        apiLead.quality_score >= 0.5 ? 'B' : 
-                        apiLead.quality_score >= 0.3 ? 'C' : 'D') as 'A' | 'B' | 'C' | 'D',
-          status: 'new' as const,
-          interests: keywords,
-          painPoints: [],
-          summary: apiLead.title || apiLead.content?.slice(0, 150) + '...',
-          createdAt: new Date(apiLead.discovered_at || Date.now()),
-          updatedAt: new Date(apiLead.discovered_at || Date.now())
-        }))
-        
-        setDiscoveredLeads(transformedLeads)
-        toast.success(`Discovered ${transformedLeads.length} new leads!`)
+        const leads = response.data;
+        setDiscoveredLeads(leads)
+        toast.success(`Discovered ${leads.length} new leads!`)
         setStep(4)
       } else {
         throw new Error(response.error || 'Failed to discover leads')
@@ -262,6 +254,27 @@ export function SimpleLeadDiscovery({ isOpen, onClose, onLeadsDiscovered }: Simp
                         </Badge>
                       ))}
                     </div>
+                    
+                    {/* Suggested Keywords */}
+                    {selectedNiche && (
+                      <div className="mt-4">
+                        <Label className="text-sm text-muted-foreground">Suggested keywords (click to add):</Label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {NICHE_OPTIONS.find(opt => opt.value === selectedNiche)?.keywords
+                            .filter(keyword => !keywords.includes(keyword))
+                            .map((keyword) => (
+                              <Badge 
+                                key={keyword} 
+                                variant="outline" 
+                                className="cursor-pointer hover:bg-muted border-dashed" 
+                                onClick={() => addSuggestedKeyword(keyword)}
+                              >
+                                + {keyword}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Subreddits */}
@@ -290,6 +303,27 @@ export function SimpleLeadDiscovery({ isOpen, onClose, onLeadsDiscovered }: Simp
                         </Badge>
                       ))}
                     </div>
+                    
+                    {/* Suggested Subreddits */}
+                    {selectedNiche && (
+                      <div className="mt-4">
+                        <Label className="text-sm text-muted-foreground">Suggested subreddits (click to add):</Label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {NICHE_OPTIONS.find(opt => opt.value === selectedNiche)?.subreddits
+                            .filter(subreddit => !subreddits.includes(subreddit))
+                            .map((subreddit) => (
+                              <Badge 
+                                key={subreddit} 
+                                variant="outline" 
+                                className="cursor-pointer hover:bg-muted border-dashed" 
+                                onClick={() => addSuggestedSubreddit(subreddit)}
+                              >
+                                + r/{subreddit}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Max Leads */}
@@ -361,17 +395,17 @@ export function SimpleLeadDiscovery({ isOpen, onClose, onLeadsDiscovered }: Simp
                 <Card className="text-center">
                   <CardContent className="p-6">
                     <div className="text-2xl font-bold text-green-600">
-                      {discoveredLeads.filter(l => l.qualityGrade === 'A' || l.qualityGrade === 'B').length}
+                      {discoveredLeads.filter(l => l.quality_score >= 7).length}
                     </div>
-                    <div className="text-sm text-muted-foreground">High Quality (A-B)</div>
+                    <div className="text-sm text-muted-foreground">High Quality (7+)</div>
                   </CardContent>
                 </Card>
                 <Card className="text-center">
                   <CardContent className="p-6">
                     <div className="text-2xl font-bold text-purple-600">
-                      {Math.round(discoveredLeads.reduce((sum, l) => sum + l.intentScore, 0) / discoveredLeads.length * 100) || 0}%
+                      {(discoveredLeads.reduce((sum, l) => sum + l.quality_score, 0) / discoveredLeads.length).toFixed(1) || 0}
                     </div>
-                    <div className="text-sm text-muted-foreground">Avg. Intent Score</div>
+                    <div className="text-sm text-muted-foreground">Avg. Quality Score</div>
                   </CardContent>
                 </Card>
               </div>
@@ -395,21 +429,21 @@ export function SimpleLeadDiscovery({ isOpen, onClose, onLeadsDiscovered }: Simp
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <div className="font-medium">{lead.name}</div>
+                            <div className="font-medium">{lead.author}</div>
                             <div className="text-sm text-muted-foreground truncate">
-                              {lead.summary || lead.content.slice(0, 100)}...
+                              {lead.title || lead.content.slice(0, 100)}...
                             </div>
                           </div>
                           <div className="flex space-x-2 ml-4">
                             <Badge variant={
-                              lead.qualityGrade === 'A' ? 'default' :
-                              lead.qualityGrade === 'B' ? 'secondary' :
+                              lead.quality_score >= 7 ? 'default' :
+                              lead.quality_score >= 4 ? 'secondary' :
                               'outline'
                             }>
-                              {lead.qualityGrade}
+                              {lead.quality_score.toFixed(1)}
                             </Badge>
                             <Badge variant="outline">
-                              {Math.round(lead.intentScore * 100)}%
+                              {lead.sentiment}
                             </Badge>
                           </div>
                         </div>

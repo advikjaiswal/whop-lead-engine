@@ -1,11 +1,15 @@
 import { APIResponse, Lead, Campaign, Member, MemberStatus, Analytics, DashboardStats, LeadSource, LeadStatus } from '@/types'
 
 // API configuration - use Railway production backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://whop-lead-engine.onrender.com'
+// FORCE RENDER URL - The environment variable seems to be pointing to the old Railway instance
+const API_BASE_URL = 'https://whop-lead-engine.onrender.com'
 
+// Validate API URL
 // Validate API URL
 if (!API_BASE_URL) {
   console.warn('API_BASE_URL is not configured. API calls may fail.')
+} else {
+  console.log('API Base URL:', API_BASE_URL)
 }
 
 class APIError extends Error {
