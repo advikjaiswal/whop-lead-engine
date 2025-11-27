@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from backend.database import Base
 
@@ -16,3 +17,6 @@ class User(Base):
     stripe_access_token = Column(String, nullable=True)
     stripe_refresh_token = Column(String, nullable=True)
     stripe_publishable_key = Column(String, nullable=True)
+    
+    # Relationships
+    members = relationship("Member", back_populates="user")
