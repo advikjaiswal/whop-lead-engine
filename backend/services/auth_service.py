@@ -55,9 +55,11 @@ def create_access_token(data: dict):
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     try:
-        token = credentials.credentials
+        token = credentials.credentials.strip()
+        print(f"DEBUG: Received token: {token}")
         
-        if token.startswith("demo-"):
+        # Extremely permissive check for demo token
+        if "demo-" in token or token == "demo-token.signature":
             demo_user = User(
                 id=999999,
                 email='demo@whop.com',
