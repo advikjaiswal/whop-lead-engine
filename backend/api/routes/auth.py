@@ -91,6 +91,10 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     try:
+        # Demo login bypass
+        if user.email == "demo@whop.com" and user.password == "DemoPass123":
+            return {"access_token": "demo-token.signature", "token_type": "bearer"}
+
         db_user = db.query(User).filter(
             User.email == user.email.strip().lower(),
             User.is_active == True
