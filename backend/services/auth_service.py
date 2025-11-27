@@ -60,7 +60,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         if token.startswith("demo-"):
             demo_user = User(
                 id=999999,
-                email='demo@demo.com',
+                email='demo@whop.com',
                 full_name='Demo User',
                 is_active=True,
                 created_at=datetime.utcnow()
