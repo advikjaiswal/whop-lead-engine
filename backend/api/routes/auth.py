@@ -36,6 +36,18 @@ async def debug_db(db: Session = Depends(get_db)):
         results["tables"] = tables
         results["users_table_exists"] = "users" in tables
         
+        # Try to query User table to check for schema mismatch
+        if "users" in tables:
+            try:
+                # Import User model inside function to avoid circular imports if any
+                from backend.models.user import User
+                user_count = db.query(User).count()
+                results["user_count"] = user_count
+                results["user_query_successful"] = True
+            except Exception as e:
+                results["user_query_error"] = str(e)
+                results["user_query_successful"] = False
+        
     except Exception as e:
         results["error"] = str(e)
         
