@@ -2,7 +2,8 @@ import { APIResponse, Lead, Campaign, Member, MemberStatus, Analytics, Dashboard
 
 // API configuration - use Railway production backend
 // FORCE RENDER URL - The environment variable seems to be pointing to the old Railway instance
-const API_BASE_URL = 'https://whop-lead-engine.onrender.com'
+// FORCE RENDER URL - The environment variable seems to be pointing to the old Railway instance
+export const API_BASE_URL = 'https://whop-lead-engine.onrender.com'
 
 // Validate API URL
 // Validate API URL

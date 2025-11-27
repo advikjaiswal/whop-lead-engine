@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { workspaceAPI } from "@/lib/api"
+import { workspaceAPI, API_BASE_URL } from "@/lib/api"
 
 // Schema matching the checklist requirements
 const setupSchema = z.object({
@@ -265,7 +265,7 @@ export default function SetupPage() {
                                             variant="outline"
                                             onClick={async () => {
                                                 try {
-                                                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://whop-lead-engine-production.up.railway.app'}/api/webhooks/connect/oauth`, {
+                                                    const res = await fetch(`${API_BASE_URL}/api/webhooks/connect/oauth`, {
                                                         headers: {
                                                             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                                                         }
