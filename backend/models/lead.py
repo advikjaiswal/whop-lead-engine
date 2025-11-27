@@ -34,6 +34,7 @@ class Lead(Base):
 
     owner = relationship("User")
     message_flow = relationship("MessageFlow")
+    outreach_messages = relationship("OutreachMessage", back_populates="lead")
 
 # We need to define MessageFlow model as well
 class MessageFlow(Base):

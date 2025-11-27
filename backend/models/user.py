@@ -20,3 +20,5 @@ class User(Base):
     
     # Relationships
     members = relationship("Member", back_populates="user")
+    outreach_campaigns = relationship("OutreachCampaign", back_populates="user")
+    analytics = relationship("Analytics", back_populates="user")
